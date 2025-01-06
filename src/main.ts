@@ -4,9 +4,25 @@ import { AjoutModele } from '.';
 import { MemoryRouter } from 'react-router-dom';
 import { cleanup } from '@testing-library/react';
 const mockApiCall = vi.fn().mockResolvedValue({});
-// Mock FiltersPanel component
 vi.mock('./tags', () => ({
  default: () => <div data-testid="filters">Filters Mock</div>
+}));
+vi.mock('@/pages/Generer/Branches', () => ({
+ default: () => (
+<select data-testid="id-courrier-branche">
+<option value="test-branch">Test Branch</option>
+</select>
+ )
+}));
+vi.mock('@/pages/Generer/TypesDocuments', () => ({
+ default: () => (
+<select data-testid="type-select">
+<option value="test-type">Test Type</option>
+</select>
+ )
+}));
+vi.mock('./importModele', () => ({
+ default: () => <input type="file" data-testid="file-input" />
 }));
 vi.mock('@/hooks/useApi', () => ({
  useDelayApi: () => ({
@@ -30,15 +46,12 @@ describe('AjoutModele', () => {
    vi.clearAllMocks();
  });
  afterEach(cleanup);
- const renderComponent = () => {
-   return render(
+ it('handles form submission with all fields', async () => {
+   render(
 <MemoryRouter>
 <AjoutModele />
 </MemoryRouter>
    );
- };
- it('handles form submission with all fields', async () => {
-   renderComponent();
    const fileInput = screen.getByTestId('file-input');
    Object.defineProperty(fileInput, 'files', { value: [mockFile] });
    fireEvent.change(fileInput);
@@ -57,7 +70,4 @@ describe('AjoutModele', () => {
      ecmDocumentType: 'test-type',
    });
  });
-}); FAIL  src/Admin/ajoutModele/ajoutModele.spec.tsx > AjoutModele > handles form submission with all fields
-TestingLibraryElementError: Unable to find an element by: [data-testid="id-courrier-branche"]
-
-Ignored nodes: comments, script, style
+});
