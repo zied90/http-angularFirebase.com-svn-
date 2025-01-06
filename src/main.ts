@@ -1,24 +1,3 @@
-export const adminTemplateAddRoute: ApiRoute = {
-  description: "Admin - Ajouter un template",
-  id: "adminTemplateAddRoute",
-  path: "/template",
-  cache: true,
-  deleteCacheOn: ["adminTemplateManageRoute"],
-  reloadOn: ["adminTemplateManageRoute"],
-  ttl: 5 * minutes,
-  method: "POST",
-  paramsConverter: ({ template, tags  }: { template: Blob; tags: string }) => {
-    const data = new FormData();
-    //tags?.split(',').map((tag) => data.append("tags[]", tag));
-    data.append("tags", tags)
-    data.append("file", template as Blob);
-    return data;
-  }, 
-  alertError: { message: "Impossible d'ajouter le modèle" },
-  alertSuccess: { message: "Modéle ajouté avec succès" },
-
-};
-
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { debounce } from "ts-debounce";
@@ -38,6 +17,8 @@ interface TemplateFormData {
   name: string;
   file: File | null;
   tags: string;
+  branch: string;
+  ecmDocumentType: string;
 }
 export const AjoutModele: React.FC = () => {
   const [serachParams] = useSearchParams();
@@ -48,6 +29,8 @@ export const AjoutModele: React.FC = () => {
     name: "",
     file: null,
     tags: "",
+    branch: "",
+    ecmDocumentType: "",
   });
   const navigate = useNavigate();
   const location = useLocation();
@@ -65,13 +48,19 @@ export const AjoutModele: React.FC = () => {
     }
 
     try {
-      const template = formData.file;
-      await uploadPost({ formData });
+      await uploadPost({
+        template: formData.file,
+        tags: formData.tags,
+        branche: formData.branch,
+        ecmDocumentType: formData.ecmDocumentType,
+      });
       navigate(location.pathname, { replace: true });
       setFormData({
         name: "",
         file: null,
         tags: "",
+        branch: "",
+        ecmDocumentType: "",
       });
       setFileValue(null);
     } catch (error) {
@@ -104,7 +93,6 @@ export const AjoutModele: React.FC = () => {
   }
   const onRef = (ref: HTMLFormElement) => {
     setFormRef(ref);
-    // // add a DOM observer to trigger updateFormData on load, its an ugly fix for the form button générer not being refreshed on load
     const observer = new MutationObserver(
       debounce((mutations: MutationRecord[], observer: MutationObserver) => {
         updateFormDatas(ref);
@@ -123,7 +111,6 @@ export const AjoutModele: React.FC = () => {
       }));
     }
   }, [tags]);
-  console.log("formData", formData);
   return (
     <>
       <h2 className="title">Ajouter un modèle</h2>
@@ -146,7 +133,7 @@ export const AjoutModele: React.FC = () => {
               </div>
             </div>
             <div className="template-form__actions">
-              <Button classModifier="primary" type="submit">
+              <Button classModifier="primary" type="submit" disabled={disabledBtnAdd}>
                 Enregistrer
               </Button>
             </div>
