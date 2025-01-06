@@ -1,3 +1,23 @@
+export const adminTemplateAddRoute: ApiRoute = {
+  description: "Admin - Ajouter un template",
+  id: "adminTemplateAddRoute",
+  path: "/template",
+  cache: true,
+  deleteCacheOn: ["adminTemplateManageRoute"],
+  reloadOn: ["adminTemplateManageRoute"],
+  ttl: 5 * minutes,
+  method: "POST",
+  paramsConverter: ({ template, tags  }: { template: Blob; tags: string }) => {
+    const data = new FormData();
+    //tags?.split(',').map((tag) => data.append("tags[]", tag));
+    data.append("tags", tags)
+    data.append("file", template as Blob);
+    return data;
+  }, 
+  alertError: { message: "Impossible d'ajouter le modèle" },
+  alertSuccess: { message: "Modéle ajouté avec succès" },
+
+};
 
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -17,7 +37,7 @@ import Branches from "@/pages/Generer/Branches";
 interface TemplateFormData {
   name: string;
   file: File | null;
-  tags: string[];
+  tags: string;
 }
 export const AjoutModele: React.FC = () => {
   const [serachParams] = useSearchParams();
@@ -27,7 +47,7 @@ export const AjoutModele: React.FC = () => {
   const [formData, setFormData] = useState<TemplateFormData>({
     name: "",
     file: null,
-    tags: [],
+    tags: "",
   });
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,12 +66,12 @@ export const AjoutModele: React.FC = () => {
 
     try {
       const template = formData.file;
-      await uploadPost({ template, tags });
+      await uploadPost({ formData });
       navigate(location.pathname, { replace: true });
       setFormData({
         name: "",
         file: null,
-        tags: [],
+        tags: "",
       });
       setFileValue(null);
     } catch (error) {
@@ -76,8 +96,10 @@ export const AjoutModele: React.FC = () => {
 
     if (formRef || fixedRef) {
       const formDatasObject = Object.fromEntries(new FormData(formRef || fixedRef).entries());
-      console.log("formDatasObject", formDatasObject);
-      // setFormDatas((formDatas: any) => formDatasObject);
+      setFormData((prevData) => ({
+        ...prevData,
+        ...formDatasObject,
+      }));
     }
   }
   const onRef = (ref: HTMLFormElement) => {
@@ -93,28 +115,37 @@ export const AjoutModele: React.FC = () => {
     }, 6000);
     observer.observe(ref, { childList: true, subtree: true });
   };
+  useEffect(() => {
+    if (tags) {
+      setFormData((prevData) => ({
+        ...prevData,
+        tags: tags,
+      }));
+    }
+  }, [tags]);
+  console.log("formData", formData);
   return (
     <>
-      <h2 className="center-text">Ajouter un modèle</h2>
-      <Form onSubmit={handleSubmit} onChange={updateFormDatas} onInit={updateFormDatas} onRef={onRef}>
-        <div className="flex-container">
-          <Filtres className="filterA" />
-          <div>
-            <div style={{ marginBottom: "1em", marginLeft: "1em" }}>
-              <TypesDocuments className="label-style" />
+      <h2 className="title">Ajouter un modèle</h2>
+      <Form onSubmit={handleSubmit} onChange={updateFormDatas} onInit={updateFormDatas} onRef={onRef} className="template-form">
+        <div className="template-form__container">
+          <div className="template-form__sidebar">
+            <Filtres className="filters-section" />
+          </div>
+          <div className="template-form__main-content">
+            <div className="template-form__group">
+              <TypesDocuments className="form-field" />
             </div>
-            <div style={{ marginBottom: "1em", marginLeft: "1em" }}>
-              <Branches className="label-style" />
+            <div className="template-form__group">
+              <Branches className="form-field" />
             </div>
             <div>
-              <div style={{ display: "flex", marginBottom: "1em", marginLeft: "1em" }}>
-                <div style={{ width: "174px" }}>
-                  Modéle <span style={{ color: "red" }}> *</span>
-                </div>
+              <div className="template-form__group template-form__group--with-label">
+                <label className="template-form__label template-form__label--required">Modèle</label>
                 <ModeleImport onChange={handleFileChange} file={fileValue} />
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginLeft: "14em" }}>
+            <div className="template-form__actions">
               <Button classModifier="primary" type="submit">
                 Enregistrer
               </Button>
@@ -125,70 +156,3 @@ export const AjoutModele: React.FC = () => {
     </>
   );
 };
-/*
-    
-@import "../../toolkit/styles/variables.scss";
-@import "../../toolkit/styles/functions";
-.BtnDownloadModeleImport {
-  .btn-upload {
-    border: 1px solid #000;
-    padding: 0.3em 0.5em;
-    box-shadow: 1px 1px 3px 2px #0000001f;
-  }
-}
-.af-form {
-  justify-content: center;
-  align-items: center;
-}
-.modele-content {
-  min-width: 500px;
-  position: relative;
-  background: #fff;
-  border-radius: 4px;
-  overflow: hidden;
-  min-height: 397px;
-}
-
-.toolbar {
-  --border-radius: 4px;
-  border-radius: var(--border-radius);
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
-  background: #fff;
-
-  &__header {
-    border-top-left-radius: var(--border-radius);
-    border-top-right-radius: var(--border-radius);
-    background: $primary-color;
-    color: #fff;
-    padding: size($vPaddings $hPaddings);
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  &__body {
-    padding: size($vPaddingsM $hPaddings);
-  }
- 
-}
-.flex-container {
-  display: flex;
-  
-  
-}
-.center-text {
-  text-align: center;
-}
-.flex-column {
-  display: flex;
-  flex-direction: column;
-  margin: 2em;
-}
-.label-style{
-  width: 160px;
-}
-.filterA{
-  margin-top: 0em;
-}
