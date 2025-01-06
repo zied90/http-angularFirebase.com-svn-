@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { debounce } from "ts-debounce";
 import Form from "@/toolkit/Components/Form/Form";
@@ -8,8 +8,6 @@ import Button from "@/toolkit/Components/Form/Button";
 import "./AjoutModele.scss";
 import { useDelayApi } from "@/hooks/useApi";
 import { adminTemplateAddRoute } from "@/Api/ApiRoutes";
-import { GlobalAlertContext } from "@/toolkit/Components/GlobalAlert/GlobalAlertContext";
-import { AlertTypeEnum } from "@/toolkit/Components/Alert/Alert.type";
 import TypesDocuments from "@/pages/Generer/TypesDocuments";
 import Branches from "@/pages/Generer/Branches";
 
@@ -22,7 +20,6 @@ interface TemplateFormData {
 }
 export const AjoutModele: React.FC = () => {
   const [serachParams] = useSearchParams();
-  const { addAlert } = useContext(GlobalAlertContext);
   const [formRef, setFormRef] = useState<HTMLFormElement | null>(null);
   const [fileValue, setFileValue] = useState<File | null>(null);
   const [formData, setFormData] = useState<TemplateFormData>({
@@ -39,13 +36,6 @@ export const AjoutModele: React.FC = () => {
   const tags = serachParams.get("tags");
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.file) {
-      addAlert({
-        message: "Veuillez sélectionner un fichier Word.",
-        type: AlertTypeEnum.error,
-      });
-      return;
-    }
 
     try {
       await uploadPost({
