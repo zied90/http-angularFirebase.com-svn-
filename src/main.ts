@@ -47,7 +47,7 @@ export const AjoutModele: React.FC = () => {
       navigate(location.pathname, { replace: true });
       setFormData(INITIAL_FORM_STATE);
       setFileValue(null);
-   
+      formRef?.reset();
     } catch (error) {
       throw error;
     }
