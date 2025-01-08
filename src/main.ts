@@ -1,29 +1,3 @@
-export const adminTemplateAddRoute: ApiRoute = {
-  description: "Admin - Ajouter un template",
-  id: "adminTemplateAddRoute",
-  path: "/sssstemplate",
-  cache: true,
-  deleteCacheOn: ["adminTemplateManageRoute"],
-  reloadOn: ["adminTemplateManageRoute"],
-  ttl: 5 * minutes,
-  method: "POST",
-  paramsConverter: ({formData}) => {
-    console.log(formData,"rrrrr")
-    const data = new FormData();
-    data.append("tags", formData.tags)
-    data.append("file", formData.template as Blob);
-    data.append("branches", formData.branche);
-    data.append("type", "CTR");
-    data.append("workspaceId", "1");
-    data.append("ecmType", formData.ecmDocumentType);
- 
-    return data;
-  }, 
-  alertError: { message: "Impossible d'ajouter le modèle" },
-  alertSuccess: { message: "Modéle ajouté avec succès" },
-
-};
-
 import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { debounce } from "ts-debounce";
@@ -47,14 +21,15 @@ interface TemplateFormData {
   workspaceId: string;
   type: string;
 }
+
 const INITIAL_FORM_STATE: TemplateFormData = {
   name: "",
   file: null,
   tags: "",
   branch: "",
   ecmDocumentType: "",
-  workspaceId:"",
-  type:""
+  workspaceId: "",
+  type: "",
 };
 const ACCEPTED_FILE_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 export const AjoutModele: React.FC = () => {
@@ -71,13 +46,7 @@ export const AjoutModele: React.FC = () => {
     e.preventDefault();
     try {
       await uploadPost({
-        formData
-      /*   template: formData.file,
-        tags: formData.tags,
-        branche: formData.branch,
-        ecmDocumentType: formData.ecmDocumentType,
-        type:formData.type,
-        workspaceId:formData.workspaceId, */
+        formData,
       });
       navigate(location.pathname, { replace: true });
       setFormData(INITIAL_FORM_STATE);
@@ -117,7 +86,7 @@ export const AjoutModele: React.FC = () => {
     observer.observe(ref, { childList: true, subtree: true });
   };
   useEffect(() => {
-    const isFormValid = !!(fileValue && tags && formData.branch && formData.ecmDocumentType&&  formData.workspaceId && formData.type);
+    const isFormValid = !!(fileValue && tags && formData.branch && formData.ecmDocumentType && formData.workspaceId && formData.type);
     setDisabledBtnAdd(!isFormValid);
   }, [fileValue, tags, formData.branch, formData.ecmDocumentType, formData.workspaceId, formData.type]);
   useEffect(() => {
@@ -153,7 +122,7 @@ export const AjoutModele: React.FC = () => {
             <div className="template-form__group">
               <Types className="form-field" />
             </div>
-           
+
             <div className="template-form__group template-form__group--with-label">
               <label className="template-form__label template-form__label--required">Modèle</label>
               <ModeleImport onChange={handleFileChange} file={fileValue} />
@@ -169,4 +138,4 @@ export const AjoutModele: React.FC = () => {
     </>
   );
 };
-jai undifined ici :    console.log(formData,"rrrrr") et je veux que tu fait un review de code et si ilya ameloration a faire
+est ce que ilya des chose a ameleorer dans ce compse,nt  pour info il fonction avec cette etat
