@@ -1,141 +1,137 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { debounce } from "ts-debounce";
-import Form from "@/toolkit/Components/Form/Form";
-import Filtres from "./tags";
-import ModeleImport from "./importModele";
-import Button from "@/toolkit/Components/Form/Button";
-import "./AjoutModele.scss";
-import { useDelayApi } from "@/hooks/useApi";
-import { adminTemplateAddRoute } from "@/Api/ApiRoutes";
-import TypesDocuments from "@/pages/Generer/TypesDocuments";
-import Branches from "@/pages/Generer/Branches";
-import Workspaces from "../workspace";
-import Types from "../type";
-interface TemplateFormData {
-  name: string;
-  file: File | null;
-  tags: string;
-  branch: string;
-  ecmDocumentType: string;
-  workspaceId: string;
-  type: string;
+donne moi le fichiezr .csv  correspond a cette fonction : private List<UserModel> parseCsv(MultipartFile file) throws IOException {
+        List<UserModel> users = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] columns = line.split(";"); // Assuming CSV is comma-separated
+                if (columns.length >= 5) { // Ensure there are at least 4 columns
+                    UserModel user = new UserModel();
+                    String firstName = columns[0].trim();
+                    String lastName = columns[1].trim();
+                    String name =(StringUtils.isNoneBlank(firstName)?firstName.toUpperCase():
+                        "")+" "+(StringUtils.isNoneBlank(lastName)?lastName.toUpperCase():"");
+                    user.setName(name);
+                    user.setUserNumber(columns[2].trim());
+                    user.setEmail(columns[3].trim());
+                    String axaType = columns[4].trim();
+                    List<AuthoritiesEnum> authorities = Collections.singletonList(AuthoritiesEnum.fromValue(axaType));
+                    user.setAuthorities(createAuthorities(authorities));
+                    users.add(user);
+                }
+            }
+        }
+        return users;
+    }package fr.axa.pfel.ellipse.model.user;
+
+import fr.axa.pfel.ellipse.constant.WorkspaceEnum;
+import fr.axa.pfel.ellipse.storage.domain.Container;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
+
+@Data
+public class UserModel {
+
+    private Long id;
+    private String name;
+
+    private String email;
+    private String userNumber;
+    private String groupId;
+    private String axaType;
+    private List<PortfolioModel> portfolioModels = new ArrayList<>();
+    private List<AuthorityModel> authorities;
+    private List<WorkspaceModel> workspaceModelList;
+
+
+    public Long getWorkspaceId() {
+        if (workspaceModelList != null) {
+            return workspaceModelList.stream()
+                .filter(workspaceModel -> email.compareToIgnoreCase(
+                    workspaceModel.getName()) == 0
+                    && workspaceModel.getWorkspaceTypeModel() != null
+                    && workspaceModel.getWorkspaceTypeModel().getName().equals("WORKSPACE"))
+                .map(WorkspaceModel::getId).findFirst()
+                .orElse(null);
+        }
+
+        return null;
+    }
+
+
+    public String getDocumentPath(boolean isFs) {
+        return Container.DOCUMENT.getName() + (isFs ? ":/" : "/") + email;
+
+    }
+
+    public String getWorkspacePath(boolean isFs) {
+        return Container.WORKSPACE.getName() + (isFs ? ":/" : "/") + email;
+    }
+
+
+    public Set<String> getDefaultWorkspaces() {
+        if (this.authorities != null) {
+            return this.authorities.stream().map(authorityModel -> {
+                switch (authorityModel.getAuthority()) {
+                    case "ADMIN":
+                    case "AXA_PART":
+                        return Set.of(WorkspaceEnum.AXA_PART.getCode(),
+                            WorkspaceEnum.NATIONALE.getCode());
+                    case "AGT":
+                        return Set.of(WorkspaceEnum.NATIONALE.getCode());
+                    default:
+                        return new HashSet<String>();
+                }
+            }).reduce(new HashSet<>(), (l, l1) -> {
+                l.addAll(l1);
+                return l;
+            });
+        }
+
+        return Set.of(WorkspaceEnum.NATIONALE.getCode());
+
+    }
+
+    public boolean hasRole(String role) {
+        if (authorities != null) {
+            return authorities.stream()
+                .anyMatch(authorityModel -> authorityModel.getAuthority().equals(role));
+        }
+
+        return false;
+    }
+
+    public boolean hasWorkspace(Long id, String code) {
+        if (workspaceModelList != null && !workspaceModelList.isEmpty()) {
+            final var b = workspaceModelList.stream()
+                .anyMatch(workspaceModel -> workspaceModel.getId().equals(id));
+            var check = false;
+            if (!"PERSO".equals(code)) {
+                check = getDefaultWorkspaces().stream().anyMatch(s -> s.equals(code));
+            }
+
+            return b || check;
+        }
+        return false;
+    }
+
+    public boolean isAgent() {
+        if (StringUtils.isNotBlank(axaType)) {
+            return axaType.equals(AxaTypeEnum.AGENTS_A2P.getValue()) || axaType.equals(
+                AxaTypeEnum.AGENTS_A2P_ASSISTANTS.getValue()) || axaType.equals(
+                AxaTypeEnum.AGENTS_GENERAUX.getValue()) || axaType.equals(
+                AxaTypeEnum.AGENTS_COLLABORATEURS.getValue()) || axaType.equals(
+                AxaTypeEnum.AGENTS_MANDATAIRES.getValue());
+        }
+
+        return false;
+    }
+
+    public boolean isAdmin() {
+        return this.authorities != null && this.authorities.stream()
+            .anyMatch(authorityModel -> "ADMIN".equals(authorityModel.getAuthority()));
+    }
 }
-
-const INITIAL_FORM_STATE: TemplateFormData = {
-  name: "",
-  file: null,
-  tags: "",
-  branch: "",
-  ecmDocumentType: "",
-  workspaceId: "",
-  type: "",
-};
-const ACCEPTED_FILE_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-export const AjoutModele: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const [formRef, setFormRef] = useState<HTMLFormElement | null>(null);
-  const [fileValue, setFileValue] = useState<File | null>(null);
-  const [formData, setFormData] = useState<TemplateFormData>(INITIAL_FORM_STATE);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [disabledBtnAdd, setDisabledBtnAdd] = useState<boolean>(false);
-  const { call: uploadPost } = useDelayApi(adminTemplateAddRoute);
-  const tags = searchParams.get("tags");
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await uploadPost({
-        formData,
-      });
-      navigate(location.pathname, { replace: true });
-      setFormData(INITIAL_FORM_STATE);
-      setFileValue(null);
-      formRef?.reset();
-    } catch (error) {
-      throw error;
-    }
-  };
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type === ACCEPTED_FILE_TYPE) {
-      setFileValue(file);
-      setFormData((prev) => ({ ...prev, file }));
-    }
-  }, []);
-  function updateFormDatas(ref?: any) {
-    let fixedRef = ref?.target?.form || ref;
-
-    if (formRef || fixedRef) {
-      const formDatasObject = Object.fromEntries(new FormData(formRef || fixedRef).entries());
-      setFormData((prev) => ({ ...prev, ...formDatasObject }));
-    }
-  }
-
-  const onRef = (ref: HTMLFormElement) => {
-    setFormRef(ref);
-    // add a DOM observer to trigger updateFormData on load, its an ugly fix for the form button générer not being refreshed on load
-    const observer = new MutationObserver(
-      debounce((mutations: MutationRecord[], observer: MutationObserver) => {
-        updateFormDatas(ref);
-      }, 100)
-    );
-    setTimeout(() => {
-      observer.disconnect();
-    }, 6000);
-    observer.observe(ref, { childList: true, subtree: true });
-  };
-  useEffect(() => {
-    const isFormValid = !!(fileValue && tags && formData.branch && formData.ecmDocumentType && formData.workspaceId && formData.type);
-    setDisabledBtnAdd(!isFormValid);
-  }, [fileValue, tags, formData.branch, formData.ecmDocumentType, formData.workspaceId, formData.type]);
-  useEffect(() => {
-    if (tags) {
-      setFormData((prev) => ({ ...prev, tags }));
-    }
-  }, [tags]);
-  return (
-    <>
-      <h2 className="title">Ajouter un modèle</h2>
-      <Form
-        onSubmit={handleSubmit}
-        onChange={updateFormDatas}
-        onInit={updateFormDatas}
-        onRef={onRef}
-        className="template-form"
-        data-testid="form-id"
-      >
-        <div className="template-form__container">
-          <div className="template-form__sidebar">
-            <Filtres className="filters-section" />
-          </div>
-          <div className="template-form__main-content">
-            <div className="template-form__group">
-              <TypesDocuments className="form-field" />
-            </div>
-            <div className="template-form__group">
-              <Branches className="form-field" />
-            </div>
-            <div className="template-form__group">
-              <Workspaces className="form-field" />
-            </div>
-            <div className="template-form__group">
-              <Types className="form-field" />
-            </div>
-
-            <div className="template-form__group template-form__group--with-label">
-              <label className="template-form__label template-form__label--required">Modèle</label>
-              <ModeleImport onChange={handleFileChange} file={fileValue} />
-            </div>
-            <div className="template-form__actions">
-              <Button classModifier="primary" type="submit" disabled={disabledBtnAdd}>
-                Enregistrer
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Form>
-    </>
-  );
-};
-est ce que ilya des chose a ameleorer dans ce compse,nt  pour info il fonction avec cette etat
