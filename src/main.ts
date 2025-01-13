@@ -1,31 +1,5 @@
-import { HabilitationWithForm } from "./habilitationWithForm";
-
-import React, { useState } from "react";
-
-import "./habilitation.scss";
-export const Habilitation = () => {
-  const [activeTab, setActiveTab] = useState("form");
-  return (
-    <div>
-      <nav role="tablist">
-        <button role="tab" className={`nav-item ${activeTab === "form" ? "active" : ""}`} onClick={() => setActiveTab("form")}>
-          Formulaire d'habilitation
-        </button>
-        <button role="tab" className={`nav-item ${activeTab === "import" ? "active" : ""}`} onClick={() => setActiveTab("import")}>
-          Import par fichier
-        </button>
-      </nav>
-      {activeTab === "form" ? (
-        <>
-          <HabilitationWithForm />
-        </>
-      ) : (
-        <div className="upload-section">{/* Section d'import par fichier */}</div>
-      )}
-    </div>
-  );
-};
 import Button from "@/toolkit/Components/Form/Button";
+import Form from "@/toolkit/Components/Form/Form";
 import FormItem from "@/toolkit/Components/Form/FormItem";
 
 import { FC } from "react";
@@ -33,15 +7,19 @@ import { FC } from "react";
 interface Props {
   className?: string;
   onCancel?: (reason: any) => void;
-  onSave?: () => void;
+  onSave?: (data:any) => void;
 }
 export const HabilitationWithForm: FC<Props> = ({ className = "", onCancel = () => {}, onSave = () => {} }) => {
   const cancelClick = () => {
     console.log("object");
   };
-  
+
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+
+  };
+
   return (
-    <form className="af-form mt-md label-15">
+    <Form onSubmit={onSubmit} className="af-form mt-md label-15">
       <fieldset className="af-form-grid">
         <FormItem type="text" label="Nom" name="title" id="id-nom" requiredMessage="Le nom est obligatoire" required autoFocus />
         <FormItem type="text" label="Prénom" name="title" id="id-nom" requiredMessage="Le nom est obligatoire" required autoFocus />
@@ -80,7 +58,109 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onCancel = () 
           Enregistrer
         </Button>
       </div>
+    </Form>
+  );
+};
+import { HabilitationWithForm } from "./habilitationWithForm";
+
+import React, { useState } from "react";
+
+import "./habilitation.scss";
+export const Habilitation = () => {
+  const [activeTab, setActiveTab] = useState("form");
+     function save(): void {
+          //call api
+         console.log("ttttt") 
+     }
+
+  return (
+    <div>
+      <nav role="tablist">
+        <button role="tab" className={`nav-item ${activeTab === "form" ? "active" : ""}`} onClick={() => setActiveTab("form")}>
+          Formulaire d'habilitation
+        </button>
+        <button role="tab" className={`nav-item ${activeTab === "import" ? "active" : ""}`} onClick={() => setActiveTab("import")}>
+          Import par fichier
+        </button>
+      </nav>
+      {activeTab === "form" ? (
+        <>
+          <HabilitationWithForm  onSave={save}/>
+        </>
+      ) : (
+        <div className="upload-section">{/* Section d'import par fichier */}</div>
+      )}
+    </div>
+  );
+};
+import { FC, useEffect, useRef } from "react";
+import { debounce } from "ts-debounce";
+import "./Form.scss";
+import { FormFieldInitEvent } from "./FormChangeEvent";
+
+interface Props {
+  className?: string;
+  children?: React.ReactNode;
+  onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
+  onInvalid?: (event: React.FormEvent<HTMLFormElement>) => void;
+  onChange?: (event: React.ChangeEvent<HTMLFormElement>) => void;
+  onInit?: (event: FormFieldInitEvent) => void;
+  onRef?: (ref: HTMLFormElement) => void;
+  focusOnFirstInvalid?: boolean;
+}
+
+const Form: FC<Props> = ({
+  className = "",
+  children,
+  onSubmit,
+  onChange = () => {},
+  onInit = () => {},
+  onRef = () => {},
+  onInvalid: onInvalidProp = () => {},
+  focusOnFirstInvalid = true,
+  ...rest
+}) => {
+  const ref = useRef<HTMLFormElement>(null);
+
+  const onInvalid = (event: React.ChangeEvent<HTMLFormElement>) => {
+    if (focusOnFirstInvalid) {
+      focusOnFirstInvalidInput(event.currentTarget);
+    }
+    onInvalidProp(event);
+  };
+
+  const onFormFieldInitEvent = (event: FormFieldInitEvent) => {
+    onInit(event);
+  };
+
+  /** add a customEventListener on form element */
+  useEffect(() => {
+    const form = ref.current;
+    if (form) {
+      form.addEventListener(FormFieldInitEvent.eventName, onFormFieldInitEvent as EventListener);
+      onRef(form);
+    }
+    return () => {
+      if (form) {
+        form.removeEventListener(FormFieldInitEvent.eventName, onFormFieldInitEvent as EventListener);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <form className={`af-form ${className}`} {...{ onSubmit, onInvalid, onChange, ...rest }} ref={ref}>
+      {children}
     </form>
   );
 };
-comment faire pour le save   donne le code 
+
+const focusOnFirstInvalidInput = debounce((form: HTMLFormElement) => {
+  const firstInvalidInput = form.querySelector("input:invalid");
+  if (firstInvalidInput) {
+    (firstInvalidInput as HTMLInputElement).focus();
+  }
+}, 100);
+
+export default Form;
+comment faire pour avoir data depuis compsent enfant ou ilya autre solution
