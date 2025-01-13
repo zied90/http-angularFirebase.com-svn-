@@ -1,318 +1,137 @@
-package fr.axa.pfel.ellipse.model;
+import Button from "@/toolkit/Components/Form/Button";
+import Form from "@/toolkit/Components/Form/Form";
+import FormItem from "@/toolkit/Components/Form/FormItem";
 
-import java.net.URI;
-import java.util.Objects;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-import fr.axa.pfel.ellipse.model.Portfolio;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.time.OffsetDateTime;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-
-
-import java.util.*;
-import jakarta.annotation.Generated;
-
-/**
- * objet Utilisateur
- */
-
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2025-01-10T10:31:36.792562300+01:00[Europe/Paris]", comments = "Generator version: 7.7.0")
-public class User {
-
-  private Integer id;
-
-  private String email;
-
-  private String userNumber;
-
-  private String axaUiRdu;
-
-  private String axaType;
-
-  private String name;
-
-  @Valid
-  private List<@Valid Portfolio> portfolios;
-
-  /**
-   * Gets or Sets authorities
-   */
-  public enum AuthoritiesEnum {
-    ADMIN("ADMIN"),
-    
-    AGT("AGT"),
-    
-    AXA_PART("AXA_PART"),
-    
-    RET_COLLECTIVE("RET_COLLECTIVE"),
-    
-    PREV_COLLECTIVE("PREV_COLLECTIVE"),
-    
-    REN_INDIVIDUELLES("REN_INDIVIDUELLES");
-
-    private String value;
-
-    AuthoritiesEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static AuthoritiesEnum fromValue(String value) {
-      for (AuthoritiesEnum b : AuthoritiesEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
-  @Valid
-  private List<AuthoritiesEnum> authorities;
-
-  public User id(Integer id) {
-    this.id = id;
-    return this;
-  }
-
-  /**
-   * identifiant de l'utilisateur
-   * @return id
-   */
-  
-  @JsonProperty("id")
-  public Integer getId() {
-    return id;
-  }
-
-  public void setId(Integer id) {
-    this.id = id;
-  }
-
-  public User email(String email) {
-    this.email = email;
-    return this;
-  }
-
-  /**
-   * email de l'utilisateur
-   * @return email
-   */
-  
-  @JsonProperty("email")
-  public String getEmail() {
-    return email;
-  }
-
-  public void setEmail(String email) {
-    this.email = email;
-  }
-
-  public User userNumber(String userNumber) {
-    this.userNumber = userNumber;
-    return this;
-  }
-
-  /**
-   * matricule de l'utilisateur
-   * @return userNumber
-   */
-  
-  @JsonProperty("userNumber")
-  public String getUserNumber() {
-    return userNumber;
-  }
-
-  public void setUserNumber(String userNumber) {
-    this.userNumber = userNumber;
-  }
-
-  public User axaUiRdu(String axaUiRdu) {
-    this.axaUiRdu = axaUiRdu;
-    return this;
-  }
-
-  /**
-   * Identifiant RDU de l'utilisateur
-   * @return axaUiRdu
-   */
-  
-  @JsonProperty("axaUiRdu")
-  public String getAxaUiRdu() {
-    return axaUiRdu;
-  }
-
-  public void setAxaUiRdu(String axaUiRdu) {
-    this.axaUiRdu = axaUiRdu;
-  }
-
-  public User axaType(String axaType) {
-    this.axaType = axaType;
-    return this;
-  }
-
-  /**
-   * Type axa de l'utilisateur
-   * @return axaType
-   */
-  
-  @JsonProperty("axaType")
-  public String getAxaType() {
-    return axaType;
-  }
-
-  public void setAxaType(String axaType) {
-    this.axaType = axaType;
-  }
-
-  public User name(String name) {
-    this.name = name;
-    return this;
-  }
-
-  /**
-   * nom de l'utilisateur
-   * @return name
-   */
-  
-  @JsonProperty("name")
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public User portfolios(List<@Valid Portfolio> portfolios) {
-    this.portfolios = portfolios;
-    return this;
-  }
-
-  public User addPortfoliosItem(Portfolio portfoliosItem) {
-    if (this.portfolios == null) {
-      this.portfolios = new ArrayList<>();
-    }
-    this.portfolios.add(portfoliosItem);
-    return this;
-  }
-
-  /**
-   * Get portfolios
-   * @return portfolios
-   */
-  @Valid 
-  @JsonProperty("portfolios")
-  public List<@Valid Portfolio> getPortfolios() {
-    return portfolios;
-  }
-
-  public void setPortfolios(List<@Valid Portfolio> portfolios) {
-    this.portfolios = portfolios;
-  }
-
-  public User authorities(List<AuthoritiesEnum> authorities) {
-    this.authorities = authorities;
-    return this;
-  }
-
-  public User addAuthoritiesItem(AuthoritiesEnum authoritiesItem) {
-    if (this.authorities == null) {
-      this.authorities = new ArrayList<>();
-    }
-    this.authorities.add(authoritiesItem);
-    return this;
-  }
-
-  /**
-   * Get authorities
-   * @return authorities
-   */
-  
-  @JsonProperty("authorities")
-  public List<AuthoritiesEnum> getAuthorities() {
-    return authorities;
-  }
-
-  public void setAuthorities(List<AuthoritiesEnum> authorities) {
-    this.authorities = authorities;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    User user = (User) o;
-    return Objects.equals(this.id, user.id) &&
-        Objects.equals(this.email, user.email) &&
-        Objects.equals(this.userNumber, user.userNumber) &&
-        Objects.equals(this.axaUiRdu, user.axaUiRdu) &&
-        Objects.equals(this.axaType, user.axaType) &&
-        Objects.equals(this.name, user.name) &&
-        Objects.equals(this.portfolios, user.portfolios) &&
-        Objects.equals(this.authorities, user.authorities);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, email, userNumber, axaUiRdu, axaType, name, portfolios, authorities);
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("class User {\n");
-    sb.append("    id: ").append(toIndentedString(id)).append("\n");
-    sb.append("    email: ").append(toIndentedString(email)).append("\n");
-    sb.append("    userNumber: ").append(toIndentedString(userNumber)).append("\n");
-    sb.append("    axaUiRdu: ").append(toIndentedString(axaUiRdu)).append("\n");
-    sb.append("    axaType: ").append(toIndentedString(axaType)).append("\n");
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    portfolios: ").append(toIndentedString(portfolios)).append("\n");
-    sb.append("    authorities: ").append(toIndentedString(authorities)).append("\n");
-    sb.append("}");
-    return sb.toString();
-  }
-
-  /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
-   */
-  private String toIndentedString(Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
-  }
+import { FC, useRef } from "react";
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  userNumber: string;
 }
+interface Props {
+  className?: string;
+  onCancel?: () => void;
+  onSave?: (data: FormData) => void;
+}
+export const HabilitationWithForm: FC<Props> = ({ className = "", onCancel = () => {}, onSave = () => {} }) => {
+  const formRef = useRef<HTMLFormElement>(null);
+  const cancelClick = () => {
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+    onCancel();
+  };
 
-    @Override
-    @PreAuthorize("hasPermission('user', 'create')")
-    public ResponseEntity<Void> userDeploy(User user) {
-        final UserModel userModel = new UserModel();
-        userModel.setEmail(user.getEmail());
-        userModel.setUserNumber(user.getUserNumber());
-        userModel.setName(user.getName());
-        userModel.setAuthorities(createAuthorities(user.getAuthorities()));
-        userService.deployUser(userModel);
-        return ResponseEntity.ok().build();
-    }    comment ca genere user.getAuthorities() je dois passer quaoi a lapi 
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const data: FormData = {
+      firstName: formData.get("firstName") as string,
+      lastName: formData.get("lastName") as string,
+      email: formData.get("email") as string,
+      userNumber: formData.get("userNumber") as string,
+    };
+    onSave(data);
+  };
+
+  return (
+    <Form onSubmit={handleSubmit} className="af-form mt-md label-15">
+      <fieldset className="af-form-grid">
+        <FormItem type="text" label="Nom" name="firstName" id="id-firstName" requiredMessage="Le nom est obligatoire" required autoFocus />
+        <FormItem
+          type="text"
+          label="Prénom"
+          name="lastName"
+          id="id-lastName"
+          requiredMessage="Le Prénom est obligatoire"
+          required
+          autoFocus
+        />
+        <FormItem
+          name="email"
+          type="email"
+          label="Adresse mail"
+          required={true}
+          id="id-mail"
+          maxLength={255}
+          pattern="[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+          patternMessage="L'adresse mail doit être au format prenom.nom@axa.fr"
+          requiredMessage="L'email est obligatoire"
+        />
+        <FormItem
+          type="text"
+          label="Matricule"
+          name="userNumber"
+          id="id-userNumber"
+          requiredMessage="Le Matricule est obligatoire"
+          required
+          autoFocus
+        />
+      </fieldset>
+      <div className="af-form-actions">
+        <Button
+          type="button"
+          classModifier="reverse"
+          onClick={cancelClick}
+          id="id-button-agence-cancel"
+          data-testid="id-button-agence-cancel"
+        >
+          Annuler
+        </Button>
+        <Button type="submit" classModifier="success" id="id-button-agence-save" data-testid="id-button-agence-save">
+          Enregistrer
+        </Button>
+      </div>
+    </Form>
+  );
+};
+import { HabilitationWithForm } from "./habilitationWithForm";
+
+import { useState } from "react";
+
+import "./habilitation.scss";
+import { useDelayApi } from "@/hooks/useApi";
+import { adminHabilitationDeployRoute } from "@/Api/ApiRoutes";
+export const Habilitation = () => {
+  const [activeTab, setActiveTab] = useState("form");
+  const { loaded, call: habiliterProfil } = useDelayApi(adminHabilitationDeployRoute);
+  const handleSave = async (user: any) => {
+    // Ici vous pouvez appeler votre API avec les données du formulaire
+    console.log("Form Data:", user);
+    try {
+      await habiliterProfil({
+          user,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  return (
+    <div>
+      <nav role="tablist">
+        <button role="tab" className={`nav-item ${activeTab === "form" ? "active" : ""}`} onClick={() => setActiveTab("form")}>
+          Formulaire d'habilitation
+        </button>
+        <button role="tab" className={`nav-item ${activeTab === "import" ? "active" : ""}`} onClick={() => setActiveTab("import")}>
+          Import par fichier
+        </button>
+      </nav>
+      {activeTab === "form" ? (
+        <>
+          <HabilitationWithForm onSave={handleSave} />
+        </>
+      ) : (
+        <div className="upload-section">{/* Section d'import par fichier */}</div>
+      )}
+    </div>
+  );
+};
+    @RequestMapping(
+        method = {RequestMethod.POST},
+        value = {"/user/deploy"},
+        produces = {"application/json"},
+        consumes = {"application/json"}
+    )
+    ResponseEntity<Void> userDeploy(@ApiParam("") @RequestBody(required = false) @Valid User user);
