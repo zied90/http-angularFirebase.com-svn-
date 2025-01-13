@@ -4,8 +4,7 @@ import FormItem from "@/toolkit/Components/Form/FormItem";
 
 import { FC, useRef } from "react";
 interface FormData {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   userNumber: string;
 }
@@ -26,9 +25,11 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onCancel = () 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    const firstName = (formData.get("firstName") as string || '').toUpperCase();
+    const lastName = (formData.get("lastName") as string || '').toUpperCase();
+    const name = `${firstName} ${lastName}`.trim();
     const data: FormData = {
-      firstName: formData.get("firstName") as string,
-      lastName: formData.get("lastName") as string,
+      name,
       email: formData.get("email") as string,
       userNumber: formData.get("userNumber") as string,
     };
@@ -96,9 +97,12 @@ import { adminHabilitationDeployRoute } from "@/Api/ApiRoutes";
 export const Habilitation = () => {
   const [activeTab, setActiveTab] = useState("form");
   const { loaded, call: habiliterProfil } = useDelayApi(adminHabilitationDeployRoute);
-  const handleSave = async (user: any) => {
+  const handleSave = async (formData: any) => {
     // Ici vous pouvez appeler votre API avec les données du formulaire
-    console.log("Form Data:", user);
+    console.log("Form Data:", formData);
+    const user={
+     user:formData
+    }
     try {
       await habiliterProfil({
           user,
@@ -128,10 +132,20 @@ export const Habilitation = () => {
     </div>
   );
 };
-    @RequestMapping(
+   @Override
+    @PreAuthorize("hasPermission('user', 'create')")
+    public ResponseEntity<Void> userDeploy(User user) {
+        final UserModel userModel = new UserModel();
+        userModel.setEmail(user.getEmail());
+        userModel.setUserNumber(user.getUserNumber());
+        userModel.setName(user.getName());
+        userModel.setAuthorities(createAuthorities(user.getAuthorities()));
+        userService.deployUser(userModel);
+        return ResponseEntity.ok().build();
+    }    @RequestMapping(
         method = {RequestMethod.POST},
         value = {"/user/deploy"},
         produces = {"application/json"},
         consumes = {"application/json"}
     )
-    ResponseEntity<Void> userDeploy(@ApiParam("") @RequestBody(required = false) @Valid User user);
+    ResponseEntity<Void> userDeploy(@ApiParam("") @RequestBody(required = false) @Valid User user); ca marche pas lordsque jevois data   le user est null et voici ce que jevoi par le reseay du font 
