@@ -43,6 +43,7 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave = async
         authorities: [formState.authorities],
       };
       await onSave(data);
+      // Réinitialiser le formulaire seulement si pas d'erreur
       if (!error) {
         setFormState({
           firstName: "",
@@ -57,8 +58,8 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave = async
     }
   };
   return (
-    <Form onSubmit={handleSubmit} className={`af-form ${className}`.trim()}>
-      <Loader loaded={loaded}>
+    <Loader loaded={loaded} loaderOver={true}>
+      <Form onSubmit={handleSubmit} className={`af-form ${className}`.trim()}>
         <fieldset className="af-form-grid">
           <Profiles onChange={handleProfileChange} value={formState.authorities} />
           <FormItem
@@ -110,12 +111,10 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave = async
             Enregistrer
           </Button>
         </div>
-      </Loader>
-    </Form>
+      </Form>
+    </Loader>
   );
-};
-
-import { HabilitationWithForm } from "./habilitationWithForm";
+};import { HabilitationWithForm } from "./habilitationWithForm";
 import { useState } from "react";
 import { useDelayApi } from "@/hooks/useApi";
 import { adminHabilitationDeployRoute } from "@/Api/ApiRoutes";
@@ -152,4 +151,4 @@ export const Habilitation = () => {
     </div>
   );
 };
-
+ lorsque lapi retourne avec erreur je veux pas initiliser le formulaire  et je he veux  initialiser que api est  traiter lenregistrement 
