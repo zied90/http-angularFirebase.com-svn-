@@ -6,6 +6,13 @@ import Loader from "@/toolkit/Components/Loader";
 import Profiles from "@/Admin/profiles";
 import { HabilitationForm } from "@/Admin/types/Habilitation.type";
 import "../habilitation.scss";
+interface FormState {
+  firstName: string;
+  lastName: string;
+  email: string;
+  userNumber: string;
+  authorities: string;
+}
 interface Props {
   className?: string;
   onSave: (data: HabilitationForm) => Promise<void>;
@@ -13,19 +20,32 @@ interface Props {
   initialData?: Partial<HabilitationForm>;
 }
 export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded, initialData = {} }) => {
-  const [formState, setFormState] = useState({
+  // Fonction pour extraire firstName et lastName du champ name
+  const extractNameParts = (fullName: string = "") => {
+    const parts = fullName.trim().split(" ");
+    return {
+      firstName: parts[0] || "",
+      lastName: parts.slice(1).join(" ") || "",
+    };
+  };
+  const [formState, setFormState] = useState<FormState>({
     firstName: "",
     lastName: "",
     email: "",
     userNumber: "",
     authorities: "",
-    ...initialData,
   });
-
   useEffect(() => {
+    // Si initialData.authorities est un tableau, on prend le premier élément
+    const authorities = Array.isArray(initialData.authorities) ? initialData.authorities[0] || "" : initialData.authorities || "";
+    // Extraction du nom et prénom depuis initialData.name
+    const { firstName, lastName } = extractNameParts(initialData.name);
     setFormState((prev) => ({
       ...prev,
       ...initialData,
+      firstName: firstName || prev.firstName,
+      lastName: lastName || prev.lastName,
+      authorities,
     }));
   }, [initialData]);
   const handleChange = (event: React.ChangeEvent<HTMLFormElement>) => {
@@ -35,7 +55,12 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded
       [name]: value,
     }));
   };
-
+  const handleProfileChange = (value: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      authorities: value,
+    }));
+  };
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
@@ -45,25 +70,24 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded
         userNumber: formState.userNumber,
         authorities: [formState.authorities],
       };
-      await onSave(data); 
+      await onSave(data);
       setFormState({
         firstName: "",
         lastName: "",
         email: "",
         userNumber: "",
         authorities: "",
-      }); // Réinitialise le formulaire après un succès
+      });
     } catch (err) {
-      setFormState((prev) => ({
-        ...prev,
-      }));
+      // En cas d'erreur, on garde toutes les valeurs du formulaire
+      console.error("Erreur lors de la soumission:", err);
     }
   };
   return (
     <Loader loaded={loaded} loaderOver={true}>
       <Form onSubmit={handleSubmit} className={`af-form ${className}`.trim()}>
         <fieldset className="af-form-grid">
-       
+          <Profiles onChange={handleProfileChange} value={formState.authorities} />
           <FormItem
             type="text"
             label="Prénom"
@@ -117,7 +141,10 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded
     </Loader>
   );
 };
-import { FC, useMemo, useState } from "react";
+  };
+  et la deuxioeme erreur Property 'name' does not exist on type 'Partial<HabilitationForm>'.ts(2339)
+any
+No quick fixes available   et voci le compsent profile :import { FC, useMemo, useState } from "react";
 import FormItem from "@/toolkit/Components/Form/FormItem";
 interface Props {
  className?: string;
@@ -155,13 +182,4 @@ const Profiles: FC<Props> = ({ className = "", onChange, value }) => {
    />
  ) : null;
 };
-export default Profiles; je veux apller proficl compsent    et sa valeur represente sa valeur   dans le tableau authorities aussi jai ca Type 'string | string[]' is not assignable to type 'string'.
-  Type 'string[]' is not assignable to type 'string'.ts(2322)
-const formState: {
-    name?: string | undefined;
-    email: string;
-    userNumber: string;
-    authorities: string | string[];
-    firstName: string;
-    lastName: string;
-}
+export default Profiles;
