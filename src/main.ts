@@ -87,6 +87,42 @@ describe("HabilitationWithForm", () => {
    render(<HabilitationWithForm {...defaultProps} loaded={false} />);
    expect(screen.getByText("Loading...")).toBeInTheDocument();
  });
-});'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.ts(2686)
-(alias) namespace React
-export namespace React
+}););
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at HabilitationWithForm (C:\dev\Front\Ellipse\src\Admin\Habilitation\habilitationWithForm\index.tsx:21:33)
+
+ ❯ src/Admin/Habilitation/habilitationWithForm/habilitationForm.spec.tsx (4)
+   ❯ HabilitationWithForm (4)
+     ✓ renders basic form elements
+     × initializes with correct initial state
+     ✓ handles form submission
+     ✓ shows loader when not loaded
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/Admin/Habilitation/habilitationWithForm/habilitationForm.spec.tsx > HabilitationWithForm > initializes with correct initial state
+AssertionError: expected "useState" to be called with arguments: [ { firstName: '', …(4) } ]
+
+Received:
+
+
+
+Number of calls: 0
+
+ ❯ src/Admin/Habilitation/habilitationWithForm/habilitationForm.spec.tsx:73:24
+     71|    const useStateSpy = vi.spyOn(React, 'useState').mockImplementation(() => [INITIAL_FORM_STATE_HABILITATION, mockSetState]);
+     72|    render(<HabilitationWithForm {...defaultProps} />);
+     73|    expect(useStateSpy).toHaveBeenCalledWith(INITIAL_FORM_STATE_HABILITATION);
+       |                        ^
+     74|  });
+     75|  test("handles form submission", async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  11:56:16
+   Duration  14.16s (transform 1.48s, setup 1.88s, collect 3.07s, tests 83ms, environment 6.19s, prepare 1.61s)
+
+ FAIL  Tests failed. Watching for file changes...
+       press h to show help, press q to quit
