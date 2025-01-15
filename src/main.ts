@@ -1,4 +1,117 @@
-import { render, screen } from "@testing-library/react";
+   import { FC, useEffect, useState } from "react";
+import Form from "@/toolkit/Components/Form/Form";
+import FormItem from "@/toolkit/Components/Form/FormItem";
+import Button from "@/toolkit/Components/Form/Button";
+import Loader from "@/toolkit/Components/Loader";
+import Profiles from "@/Admin/profiles";
+import { FormState, HabilitationForm, HabilitationProps } from "@/Admin/types/Habilitation.type";
+import "../habilitation.scss";
+import { extractAuthorities, extractNameParts, formatName } from "@/Admin/utils/utils";
+import { FORM_VALIDATION, INITIAL_FORM_STATE_HABILITATION } from "@/Admin/constants";
+
+export const HabilitationWithForm: FC<HabilitationProps> = ({ className = "", onSave, loaded, initialData = {} }) => {
+  const [formState, setFormState] = useState<FormState>(INITIAL_FORM_STATE_HABILITATION);
+  useEffect(() => {
+    const authorities = extractAuthorities(initialData.authorities);
+    const { firstName, lastName } = extractNameParts(initialData.name);
+    setFormState((prev) => ({
+      ...prev,
+      firstName: firstName || prev.firstName,
+      lastName: lastName || prev.lastName,
+      email: initialData.email || prev.email,
+      userNumber: initialData.userNumber || prev.userNumber,
+      authorities,
+    }));
+  }, [initialData]);
+  const handleChange = (event: React.ChangeEvent<HTMLFormElement>) => {
+    const { name, value } = event.target;
+    setFormState((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const handleProfileChange = (value: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      authorities: value,
+    }));
+  };
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    try {
+      const submitData: HabilitationForm = {
+        firstName: formState.firstName,
+        lastName: formState.lastName,
+        name: formatName(formState.firstName, formState.lastName),
+        email: formState.email,
+        userNumber: formState.userNumber,
+        authorities: [formState.authorities],
+      };
+      await onSave(submitData);
+      setFormState(INITIAL_FORM_STATE_HABILITATION);
+    } catch (err) {
+      console.error("Erreur lors de la soumission:", err);
+    }
+  };
+  return (
+    <Loader loaded={loaded} loaderOver={true}>
+      <Form onSubmit={handleSubmit} className={`af-form ${className}`.trim()}>
+        <fieldset className="af-form-grid">
+          <Profiles onChange={handleProfileChange} value={formState.authorities} />
+          <FormItem
+            type="text"
+            label="Prénom"
+            name="firstName"
+            id="id-firstName"
+            requiredMessage={FORM_VALIDATION.requiredMessages.firstName}
+            required
+            value={formState.firstName}
+            onChange={handleChange}
+          />
+          <FormItem
+            type="text"
+            label="Nom"
+            name="lastName"
+            id="id-lastName"
+            requiredMessage={FORM_VALIDATION.requiredMessages.lastName}
+            required
+            value={formState.lastName}
+            onChange={handleChange}
+          />
+          <FormItem
+            name="email"
+            type="email"
+            label="Adresse mail"
+            required
+            id="id-mail"
+            maxLength={255}
+            pattern={FORM_VALIDATION.emailPattern}
+            patternMessage={FORM_VALIDATION.emailPatternMessage}
+            requiredMessage={FORM_VALIDATION.requiredMessages.email}
+            value={formState.email}
+            onChange={handleChange}
+          />
+          <FormItem
+            type="text"
+            label="Matricule"
+            name="userNumber"
+            id="id-userNumber"
+            requiredMessage={FORM_VALIDATION.requiredMessages.userNumber}
+            required
+            value={formState.userNumber}
+            onChange={handleChange}
+          />
+        </fieldset>
+        <div className="af-form-actions">
+          <Button type="submit" classModifier="success" id="id-button-agence-save" data-testid="id-button-agence-save" disabled={!loaded}>
+            Enregistrer
+          </Button>
+        </div>
+      </Form>
+    </Loader>
+  );
+};
+ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import { vi, describe, test, expect, beforeEach } from 'vitest';
