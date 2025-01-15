@@ -4,47 +4,22 @@ import FormItem from "@/toolkit/Components/Form/FormItem";
 import Button from "@/toolkit/Components/Form/Button";
 import Loader from "@/toolkit/Components/Loader";
 import Profiles from "@/Admin/profiles";
-import { HabilitationForm } from "@/Admin/types/Habilitation.type";
+import { FormState, HabilitationForm, HabilitationProps } from "@/Admin/types/Habilitation.type";
 import "../habilitation.scss";
-interface FormState {
-  firstName: string;
-  lastName: string;
-  email: string;
-  userNumber: string;
-  authorities: string;
-}
-interface Props {
-  className?: string;
-  onSave: (data: HabilitationForm) => Promise<void>;
-  loaded: boolean;
-  initialData?: Partial<HabilitationForm>;
-}
-export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded, initialData = {} }) => {
-  // Fonction pour extraire firstName et lastName du champ name
-  const extractNameParts = (fullName: string = "") => {
-    const parts = fullName.trim().split(" ");
-    return {
-      firstName: parts[0] || "",
-      lastName: parts.slice(1).join(" ") || "",
-    };
-  };
-  const [formState, setFormState] = useState<FormState>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    userNumber: "",
-    authorities: "",
-  });
+import { extractAuthorities, extractNameParts, formatName } from "@/Admin/utils";
+import { FORM_VALIDATION, INITIAL_FORM_STATE_HABILITATION } from "@/Admin/constants";
+
+export const HabilitationWithForm: FC<HabilitationProps> = ({ className = "", onSave, loaded, initialData = {} }) => {
+  const [formState, setFormState] = useState<FormState>(INITIAL_FORM_STATE_HABILITATION);
   useEffect(() => {
-    // Si initialData.authorities est un tableau, on prend le premier élément
-    const authorities = Array.isArray(initialData.authorities) ? initialData.authorities[0] || "" : initialData.authorities || "";
-    // Extraction du nom et prénom depuis initialData.name
+    const authorities = extractAuthorities(initialData.authorities);
     const { firstName, lastName } = extractNameParts(initialData.name);
     setFormState((prev) => ({
       ...prev,
-      ...initialData,
       firstName: firstName || prev.firstName,
       lastName: lastName || prev.lastName,
+      email: initialData.email || prev.email,
+      userNumber: initialData.userNumber || prev.userNumber,
       authorities,
     }));
   }, [initialData]);
@@ -64,22 +39,17 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      const data: HabilitationForm = {
-        name: `${formState.firstName.toUpperCase()} ${formState.lastName.toUpperCase()}`.trim(),
+      const submitData: HabilitationForm = {
+        firstName: formState.firstName,
+        lastName: formState.lastName,
+        name: formatName(formState.firstName, formState.lastName),
         email: formState.email,
         userNumber: formState.userNumber,
         authorities: [formState.authorities],
       };
-      await onSave(data);
-      setFormState({
-        firstName: "",
-        lastName: "",
-        email: "",
-        userNumber: "",
-        authorities: "",
-      });
+      await onSave(submitData);
+      setFormState(INITIAL_FORM_STATE_HABILITATION);
     } catch (err) {
-      // En cas d'erreur, on garde toutes les valeurs du formulaire
       console.error("Erreur lors de la soumission:", err);
     }
   };
@@ -93,7 +63,7 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded
             label="Prénom"
             name="firstName"
             id="id-firstName"
-            requiredMessage="Le prénom est obligatoire"
+            requiredMessage={FORM_VALIDATION.requiredMessages.firstName}
             required
             value={formState.firstName}
             onChange={handleChange}
@@ -103,7 +73,7 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded
             label="Nom"
             name="lastName"
             id="id-lastName"
-            requiredMessage="Le nom est obligatoire"
+            requiredMessage={FORM_VALIDATION.requiredMessages.lastName}
             required
             value={formState.lastName}
             onChange={handleChange}
@@ -115,9 +85,9 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded
             required
             id="id-mail"
             maxLength={255}
-            pattern="[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
-            patternMessage="L'adresse mail doit être au format prenom.nom@axa.fr"
-            requiredMessage="L'email est obligatoire"
+            pattern={FORM_VALIDATION.emailPattern}
+            patternMessage={FORM_VALIDATION.emailPatternMessage}
+            requiredMessage={FORM_VALIDATION.requiredMessages.email}
             value={formState.email}
             onChange={handleChange}
           />
@@ -126,7 +96,7 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded
             label="Matricule"
             name="userNumber"
             id="id-userNumber"
-            requiredMessage="Le matricule est obligatoire"
+            requiredMessage={FORM_VALIDATION.requiredMessages.userNumber}
             required
             value={formState.userNumber}
             onChange={handleChange}
@@ -141,45 +111,90 @@ export const HabilitationWithForm: FC<Props> = ({ className = "", onSave, loaded
     </Loader>
   );
 };
-  };
-  et la deuxioeme erreur Property 'name' does not exist on type 'Partial<HabilitationForm>'.ts(2339)
-any
-No quick fixes available   et voci le compsent profile :import { FC, useMemo, useState } from "react";
-import FormItem from "@/toolkit/Components/Form/FormItem";
-interface Props {
- className?: string;
- onChange?: (value: string) => void;
- value?: string;
+ donne le test unitaire avec vitest et voci mes dependance {
+  "name": "ellipsev2",
+  "version": "2.1.3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env VITE_LOCAL_ENV=true npm run start:base",
+    "start:oidc-mocked": "npm-run-all --parallel oauth-mock-server react-with-calltomockedserver",
+    "start": "cross-env  VITE_API_URL=\"http://localhost:8080/api\"  npm run start:base",
+    "start:base": "npm-run-all --parallel watch:tsc vite",
+    "build": "npm run postinstall && vite build && npm run build:post",
+    "build:post": "node ./scripts/postbuild.js",
+    "test": "vitest",
+    "react-with-calltomockedserver": "cross-env VITE_OIDC_MOCK_ENABLED=true npm run start:base",
+    "oauth-mock-server": "node scripts/oauth-mock-server.js",
+    "coverage": "vitest run --coverage",
+    "coverage-watch": "vitest watch --coverage",
+    "icons": "fantasticon --config .fantasticonrc-toolkit.js && node ./scripts/icons/icons-postbuild.js",
+    "watch:tsc": "tsc --watch --noEmit",
+    "vite": "vite",
+    "postinstall": "node ./scripts/postinstall.js"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "dependencies": {
+    "@axa-fr/react-oidc": "^7.22.15",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/tracking": "^1.1.33",
+    "@vitejs/plugin-react-swc": "^3.7.0",
+    "@zhbhun/background-removal": "^1.0.8",
+    "axios": "^1.7.2",
+    "cropperjs": "^2.0.0-beta.3",
+    "eslint-config-react-app": "^7.0.1",
+    "fantasticon": "^3.0.0",
+    "js-sha256": "^0.11.0",
+    "msw": "^2.3.1",
+    "navigator.locks": "^0.8.6",
+    "oauth2-mock-server": "^7.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-flat-providers": "^2.2.0",
+    "react-imask": "^7.6.1",
+    "react-modal-promise": "^1.0.2",
+    "react-router": "^6.24.1",
+    "react-router-dom": "^6.24.1",
+    "sass": "^1.77.7",
+    "ts-debounce": "^4.0.0",
+    "typescript": "^5.5.3",
+    "vite-tsconfig-paths": "^4.3.2"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.6",
+    "@testing-library/react": "^16.0.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.14.10",
+    "cross-env": "^7.0.3",
+    "jsdom": "^24.1.0",
+    "npm-run-all": "^4.1.5",
+    "vite": "^5.3.3",
+    "vite-plugin-svgr": "^4.2.0",
+    "vitest": "^2.0.2"
+  },
+  "msw": {
+    "workerDirectory": "public"
+  },
+  "volta": {
+    "node": "20.15.1"
+  }
 }
-const Profiles: FC<Props> = ({ className = "", onChange, value }) => {
- const [profiles] = useState<any>([
-   { "id": "ADMIN", name: "ADMIN" },
-   { "id": "AGT", name: "AGT" }
- ]);
- const profileDatas = useMemo(
-   () => [
-     { label: "Sélectionnez un profile", value: "" },
-     ...profiles.map(({ name, id }: any) => ({ label: name, value: id }))
-   ],
-   [profiles]
- );
- const handleChange = (event: React.ChangeEvent<HTMLFormElement>) => {
-   onChange?.(event.target.value);
- };
- return profiles && profiles.length ? (
-<FormItem
-     id="id-profile"
-     labelStyle={className}
-     type="select"
-     label="Profile"
-     name="authorities"
-     placeholder="Sélectionner un Profile"
-     required={true}
-     visibleValue={profiles.length === 1 ? profiles[0].name : undefined}
-     value={value || (profiles.length === 1 ? profiles[0].id : "")}
-     datas={profileDatas}
-     onChange={handleChange}
-   />
- ) : null;
-};
-export default Profiles;
