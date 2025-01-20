@@ -1,48 +1,3 @@
-import React from "react";
-interface FailedUser {
-  userNumber: string;
-  reason: string;
-}
-
-interface FailedUsersTableProps {
-  users: FailedUser[];
-  className?:string
-}
-
-export const FailedUsersTable: React.FC<FailedUsersTableProps> = ({ users,className }) => {
-  if (!users.length) return null;
-
-  return (
-    <div className={`HabilitationsFailedList ${className}`}>
-      <h3 className="failed-users-table__title">Utilisateurs en échec ({users.length})</h3>
-      <table className="table-panel">
-        <colgroup>
-          <col className="col-identifiant" />
-          <col className="col-raison" />
-
-        </colgroup>
-        <thead>
-          <tr>
-          <th>Identifiant</th>
-          <th>Raison de l'échec</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user, index) => (
-            <tr key={`${user.userNumber}-${index}`}>
-              <td>{user.userNumber}</td>
-              <td>{user.reason}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-export default FailedUsersTable;
-
-
 import FileUpload from "@/Admin/Components/FileUpload";
 import { FC, useState } from "react";
 import HabilitationsUsersList from "./HabilitationsUsersList";
@@ -53,7 +8,7 @@ import { adminHabilitationListDeployRoute } from "@/Api/ApiRoutes";
 import { useDelayApi } from "@/hooks/useApi";
 import Loader from "@/toolkit/Components/Loader";
 import StatusCard from "@/Admin/Components/StatusCard";
-import FailedUsersTable from "./HabilitationFailerUsersList/FailedUsers";
+import FailedUsersTable from "./HabilitationFailedUsersList/FailedUsers";
 
 export type HabilitationsFromListProps = {
   className?: string;
@@ -148,49 +103,4 @@ export const HabilitationsFromList: FC<HabilitationsFromListProps> = ({ classNam
       )}
     </div>
   );
-};
-
-import React from "react";
-interface FailedUser {
-  userNumber: string;
-  reason: string;
-}
-
-interface FailedUsersTableProps {
-  users: FailedUser[];
-  className?:string
-}
-
-export const FailedUsersTable: React.FC<FailedUsersTableProps> = ({ users,className }) => {
-  if (!users.length) return null;
-
-  return (
-    <div className={`HabilitationsFailedList ${className}`}>
-      <h3 className="failed-users-table__title">Utilisateurs en échec ({users.length})</h3>
-      <table className="table-panel">
-        <colgroup>
-          <col className="col-identifiant" />
-          <col className="col-raison" />
-
-        </colgroup>
-        <thead>
-          <tr>
-          <th>Identifiant</th>
-          <th>Raison de l'échec</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user, index) => (
-            <tr key={`${user.userNumber}-${index}`}>
-              <td>{user.userNumber}</td>
-              <td>{user.reason}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-export default FailedUsersTable; je veux      <HabilitationsUsersList users={users} /> et les 2 card soit dans un copsent   et le maittre a la place 
-
+}; je veux  ca dans un compsent  celui qui  represent resultat de lhabiltation 
