@@ -1,15 +1,3 @@
-  const openAgenceEdit = async () => {
-    try {
-      const result = await createModal((resolve, reject) => <AgenceEdit agence={agence} onCancel={reject} onSave={resolve} />, {
-        title: "Modification coordonnées agence",
-        className: "modal-agence-edit",
-      });
-      setAgence(result as AgenceType);
-    } catch (e) {
-      console.info("Agence modification canceled, reason:", e);
-    }
-  };
-
 import FileUpload from "@/Admin/Components/FileUpload";
 import { FC, useState } from "react";
 import HabilitationsUsersList from "./HabilitationsUsersList";
@@ -34,7 +22,6 @@ export const HabilitationsFromList: FC<HabilitationsFromListProps> = ({ classNam
   const [users, setUsers] = useState<User[]>([]);
   const { loaded, call: habiliterList, data } = useDelayApi(adminHabilitationListDeployRoute);
   const [showResults, setShowResults] = useState<boolean>(false);
-  const { createModal, deleteConfirmModal } = useModal();
   const onChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) {
       let file: File = e.target.files[0];
@@ -105,97 +92,80 @@ export const HabilitationsFromList: FC<HabilitationsFromListProps> = ({ classNam
     </div>
   );
 };
- comment faire dans mon exemple pour afficher <HabilitationResults data={data} onReset={handleReset} /> dans modale  createModal   et voci le fooks import { ReactNode } from "react";
-import { Root } from "react-dom/client";
-import { create, InstanceProps } from "react-modal-promise";
+import React from "react";
+import StatusCard from "@/Admin/Components/StatusCard";
+import FailedUsersTable from "../HabilitationFailedUsersList/FailedUsers";
 
-import Modal, { Props as ModalProps } from "./Modal";
-import ModalConfirm, { Props as ModalConfirmProps } from "./ModalConfirm";
-
-const useModal = () => {
-  /**
-   * Create a modal with the given props, and render it into the document body.
-   * @param {CreateModalArgs}  - isOpen - boolean - whether the modal is open or not
-   *
-   * @example :
-   * const { createModal } = useModal();
-   * const modal = createModal(
-   *  (resolve, reject) => <ModalConfirm resolve={resolve} reject={reject}>,
-   * {
-   * isOpen: true,}
-   */
-  const createModal = async (modalContent: (resolve: any, reject: any) => React.ReactNode, modalParams: ModalProps = {}) => {
-    const MyModal: React.FC<InstanceProps<unknown>> = ({ isOpen, onResolve, onReject }) => {
-      const resolve = (value: any) => {
-        onResolve(value);
-        document.documentElement.style.overflow = "";
-      };
-
-      const reject = (reason?: any) => {
-        onReject(reason);
-        document.documentElement.style.overflow = "";
-      };
-
-      return (
-        <Modal open={isOpen} {...modalParams} onClose={reject}>
-          {modalContent(resolve, reject)}
-        </Modal>
-      );
-    };
-    const myPromiseModal = create(MyModal);
-    document.documentElement.style.overflow = "hidden";
-    return myPromiseModal({ ...modalParams, isOpen: true });
+export type HabilitationResultsProps = {
+  data: {
+    failedUsers: any[];
+    successUsers: any[];
   };
+  onReset: () => void;
+};
+const HabilitationResults: React.FC<HabilitationResultsProps> = ({ data, onReset }) => {
+  return (
+    <div className="habilitation-results">
+      <button
+        className="btn btn--reverse"
+        onClick={onReset}
+        type="button"
+        id="id-address-add-new"
+        data-testid="Fermer-importer-un-nouveau-document"
+      >
+        Importer un nouveau document
+      </button>
+      <div className="status-cards">
+        <StatusCard type="error" count={data.failedUsers.length} title="Échecs" description="habilitations échouées" />
+        <StatusCard type="success" count={data.successUsers.length} title="Succès" description="habilitations réussies" />
+      </div>
+      <FailedUsersTable users={data.failedUsers} />
+    </div>
+  );
+};
+export default HabilitationResults;
 
-  const createConfirmModal = async (modalContent: ReactNode, _modalParams: ModalConfirmProps = {}) => {
-    return createModal((resolve, reject) => {
-      return (
-        <ModalConfirm resolve={resolve} reject={reject} {..._modalParams}>
-          {modalContent}
-        </ModalConfirm>
-      );
-    }, _modalParams);
-  };
+import React from "react";
+import "./FailerUsersList.scss";
+interface FailedUser {
+  userNumber: string;
+  reason: string;
+}
 
-  const deleteConfirmModal = async (message: React.ReactNode, deleteAction: () => Promise<unknown>, options?: any) => {
-    try {
-      let result = await createConfirmModal(message, {
-        ConfirmButton: ({ onClick }) => (
-          <button onClick={onClick} className="btn btn--danger icon icon-trash" autoFocus data-testid="id-modal-confirm-button-delete">
-            Supprimer
-          </button>
-        ),
-        ...options,
-      });
-      await deleteAction();
-      return result;
-    } catch (e) {
-      throw e;
-    }
-  };
+interface FailedUsersTableProps {
+  users: FailedUser[];
+  className?:string
+}
 
-  /** function that create a modal with simply pass the Component  as argument and the props as other argument,
-   * it uses createModal function to create the modal and return the result of the modal
-   *
-   */
+export const FailedUsersTable: React.FC<FailedUsersTableProps> = ({ users,className }) => {
+  if (!users.length) return null;
 
-  const createQuickModal = async (Component: React.FC<any>, componentProps: any, modalProps: any) => {
-    return createModal((resolve, reject) => {
-      return <Component resolve={resolve} reject={reject} {...componentProps} />;
-    }, modalProps);
-  };
-
-  const closeModal = (root: Root) => {
-    root.unmount();
-  };
-
-  return {
-    createConfirmModal,
-    createModal,
-    closeModal,
-    createQuickModal,
-    deleteConfirmModal,
-  };
+  return (
+    <div className={`HabilitationsFailedList ${className}`}>
+      <h3 className="failed-users-table__title">Utilisateurs en échec ({users.length})</h3>
+      <table className="table-panel">
+        <colgroup>
+          <col className="col-identifiant" />
+          <col className="col-raison" />
+        </colgroup>
+        <thead>
+          <tr>
+          <th>Identifiant</th>
+          <th>Raison de l'échec</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user, index) => (
+            <tr key={`${user.userNumber}-${index}`}>
+              <td>{user.userNumber}</td>
+              <td>{user.reason}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 };
 
-export default useModal;
+export default FailedUsersTable;
+pour les user failer cest un tableau ca peux avoir 1000 user failer du cous je veux scroller sur cette liste 
