@@ -167,5 +167,15 @@ export const FailedUsersTable: React.FC<FailedUsersTableProps> = ({ users,classN
   );
 };
 
+.HabilitationsFailedList {
+  .table-panel {
+    thead th {
+      text-align: left;
+    }
+  }
+}
+
+
+
 export default FailedUsersTable;
 pour les user failer cest un tableau ca peux avoir 1000 user failer du cous je veux scroller sur cette liste 
