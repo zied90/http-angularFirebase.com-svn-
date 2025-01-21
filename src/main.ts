@@ -1,11 +1,26 @@
-PS C:\Users\B609EN> nvm -v
-1.2.2
-PS C:\Users\B609EN> nvm install 12.11.1
-Downloading node.js version 12.11.1 (64-bit)...
-Complete
-Downloading npm...
-Creating C:\Users\B609EN\AppData\Local\Temp\nvm-install-3861017411\temp
+PS C:\dev\Front\e-validation-front> npm install
+internal/modules/cjs/loader.js:818
+  throw err;
+  ^
 
-Downloading npm version 6.11.3... Complete
-Installing npm v6.11.3...
-error installing 12.11.1: open C:\Users\B609EN\AppData\Local\Temp\nvm-npm-2593994530\npm-v6.11.3.zip: The system cannot find the file specified.
+Error: Cannot find module 'node:path'
+Require stack:
+- C:\Users\B609EN\AppData\Local\Volta\tools\image\npm\10.8.2\lib\cli.js
+- C:\Users\B609EN\AppData\Local\Volta\tools\image\npm\10.8.2\bin\npm-cli.js
+    at Function.Module._resolveFilename (internal/modules/cjs/loader.js:815:15)
+    at Function.Module._load (internal/modules/cjs/loader.js:667:27)
+    at Module.require (internal/modules/cjs/loader.js:887:19)
+    at require (internal/modules/cjs/helpers.js:74:18)
+    at Object.<anonymous> (C:\Users\B609EN\AppData\Local\Volta\tools\image\npm\10.8.2\lib\cli.js:2:18)
+    at Module._compile (internal/modules/cjs/loader.js:999:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1027:10)
+    at Module.load (internal/modules/cjs/loader.js:863:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:708:14)
+    at Module.require (internal/modules/cjs/loader.js:887:19) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\B609EN\\AppData\\Local\\Volta\\tools\\image\\npm\\10.8.2\\lib\\cli.js',
+    'C:\\Users\\B609EN\\AppData\\Local\\Volta\\tools\\image\\npm\\10.8.2\\bin\\npm-cli.js'
+  ]
+}
+PS C:\dev\Front\e-validation-front> 
