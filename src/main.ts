@@ -1,66 +1,88 @@
-import { FC,useMemo, useState } from "react";
-import FormItem from "@/toolkit/Components/Form/FormItem";
+import { useAxios } from "@/hooks/useAxios";
+import { useOidcAccessToken } from "@/oidc/useOidc";
+import { useContext } from "react";
+import { AlertTypeEnum } from "@/toolkit/Components/Alert/Alert.type";
+import { GlobalAlertContext } from "@/toolkit/Components/GlobalAlert/GlobalAlertContext";
+import ApiRoute from "@/types/ApiRoute.type";
+import AxiosOptions from "@/types/AxiosOptions.type";
+import { DEFAULT_API_ERROR_MESSAGE, getAlertMessage, simplifyParams } from "@/Utils/ApiUtils";
 
-interface Props {
-  className?: string;
-}
-// TODO: Appel API dès que l'endpoint est prêt
-const Workspaces: FC<Props> = ({ className = "" }) => {
+export const useApi = (route: ApiRoute, localParams: any = null, axiosOptions: AxiosOptions = {}) => {
+  const { accessToken } = useOidcAccessToken();
+  const { addAlert } = useContext(GlobalAlertContext);
 
-  const [workspaces] = useState<any>([{"id":1,name:"Nationale"},{"id":2,name:"Axa part"}]);
-  const workspaceDatas = useMemo(
-    () => [{ label: "Sélectionnez un workspace", value: "" }, ...(workspaces || [])?.map(({ name, id }: any) => ({ label: name, value: id }))],
-    [workspaces]
-  );
+  const accessTokenHeader = accessToken
+    ? {
+        Authorization: `Bearer ${accessToken}`,
+      }
+    : {};
+  const config = {
+    headers: {
+      ...accessTokenHeader,
+    },
+  };
 
-  return workspaces && workspaces.length ? (
-    <FormItem
-      id="id-workspace"
-      labelStyle={className}
-      type="select"
-      label="Workspace"
-      name="workspaceId"
-      placeholder="Sélectionner un Workspace"
-      required={true}
-      visibleValue={workspaces.length === 1 ? workspaces[0].name : undefined}
-      value={workspaces.length === 1 ? workspaces[0].id : undefined}
-      datas={workspaceDatas}
-    />
-  ) : null;
+  let { currentRoute, axiosParams } = simplifyParams(route, localParams, localParams);
+
+  const newAxiosOptions = { ...axiosOptions, ...currentRoute.axiosOptions };
+  newAxiosOptions.routeId = currentRoute.id;
+  newAxiosOptions.data = axiosParams.datas;
+  newAxiosOptions.params = axiosParams.params;
+  newAxiosOptions.method = currentRoute.method;
+  newAxiosOptions.cache = currentRoute.cache || false;
+  newAxiosOptions.cacheMethods = currentRoute.method ? [currentRoute.method] : ["GET"];
+  newAxiosOptions.ttl = currentRoute.ttl || 0;
+  newAxiosOptions.headers = config.headers;
+
+  const updateLocalDataFn = (data: any) => {
+    updateLocalData(data);
+  };
+
+  const {
+    cancel,
+    data,
+    error,
+    loaded,
+    loadedOnce,
+    call: callAxios,
+    clearError,
+    updateLocalData,
+  } = useAxios(currentRoute.path, newAxiosOptions as AxiosOptions);
+
+  const call = async (params?: any): Promise<any> => {
+    let { currentRoute, axiosParams } = simplifyParams(route, params, localParams);
+
+    try {
+      const result = await callAxios(axiosParams, currentRoute);
+
+      if (route.alertSuccess) {
+        addAlert({
+          // @ts-ignore
+          message: route.alertSuccess.message,
+          type: AlertTypeEnum.success,
+        });
+      }
+      return route.responseConverter ? route.responseConverter(result) : result;
+    } catch (e: any) {
+      route.alertError
+        ? addAlert({
+            message: getAlertMessage(route.alertError, e.response?.data),
+            // @ts-ignore
+            type: route.alertError.type || AlertTypeEnum.error,
+          })
+        : addAlert({
+            message: e.response?.data?.message || DEFAULT_API_ERROR_MESSAGE,
+            type: AlertTypeEnum.error,
+          });
+
+      console.error(e);
+   
+    }
+  };
+
+  return { cancel, data, error, loaded, loadedOnce, call, clearError, updateLocalData: updateLocalDataFn };
 };
 
-export default Workspaces;
-
-
-import { FC, useMemo, useState } from "react";
-import FormItem from "@/toolkit/Components/Form/FormItem";
-
-interface Props {
-  className?: string;
-}
-// TODO: Appel API dès que l'endpoint est prêt
-const Types: FC<Props> = ({ className = "" }) => {
-
-  const [types] = useState<any>([{"id":"CTR",name:"Contrat"},{"id":"CLT",name:"Client"}]);
-  const typeDatas = useMemo(
-    () => [{ label: "Sélectionnez un type", value: "" }, ...(types || [])?.map(({ name, id }: any) => ({ label: name, value: id }))],
-    [types]
-  );
-
-  return types && types.length ? (
-    <FormItem
-      id="id-Type-template"
-      labelStyle={className}
-      type="select"
-      label="Type"
-      name="type"
-      placeholder="Sélectionner un Type"
-      required={true}
-      visibleValue={types.length === 1 ? types[0].name : undefined}
-      value={types.length === 1 ? types[0].id : undefined}
-      datas={typeDatas}
-    />
-  ) : null;
+export const useDelayApi = (route: ApiRoute, params: any = null, axiosOptions: AxiosOptions = {}) => {
+  return useApi(route, params, { ...axiosOptions, atStart: false });
 };
-
-export default Types;  fait le meme proncipe pour ces 2 compsent
