@@ -76,7 +76,7 @@ export const useApi = (route: ApiRoute, localParams: any = null, axiosOptions: A
           });
 
       console.error(e);
-   
+      throw e;
     }
   };
 
