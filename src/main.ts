@@ -1,4 +1,4 @@
-import { FC, useContext, useEffect, useState } from "react";
+import { FC, useContext, useEffect, useState ,useRef} from "react";
 import { useParams } from "react-router-dom";
 import Agences from "@/components/Agences";
 import { useApi, useDelayApi } from "@/hooks/useApi";
@@ -50,6 +50,7 @@ const Generer: FC<Props> = ({ className = "" }) => {
       );
     }
   }, [contextNumContrat, contextNumClient, typeCourrier]);
+  
 
   // should use formData object instead of this
   const [signatureCheck, setSignatureCheck] = useState<boolean>(true);
@@ -165,6 +166,7 @@ const Generer: FC<Props> = ({ className = "" }) => {
                     autoFocus
                     value={numContratOrClient}
                     onChange={(e) => setNumContratOrClient(e.target.value)}
+                 
                     required
                   />
                   {courrier ? (
@@ -218,4 +220,4 @@ const Generer: FC<Props> = ({ className = "" }) => {
 };
 
 export default Generer;
- je parle ici
+on peux  que declencher chmps obligatoir a larriver a la page  sans qluicer sur la form pour apprattre  car cest le cas maintenat 
