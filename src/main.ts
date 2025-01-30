@@ -1,223 +1,224 @@
-import { FC, useContext, useEffect, useState ,useRef} from "react";
-import { useParams } from "react-router-dom";
-import Agences from "@/components/Agences";
-import { useApi, useDelayApi } from "@/hooks/useApi";
-import Form from "@/toolkit/Components/Form/Form";
-import FormItem from "@/toolkit/Components/Form/FormItem";
-import Loader from "@/toolkit/Components/Loader";
-import Document from "@/types/Document.type";
-import { useNavigate } from "react-router-dom";
-import { courriers, getRouteItemFromId } from "@/config/Routes";
-import { useCache } from "@/hooks/useCache";
-import { addListenToBroadcast } from "@/Utils/CommunicationWithAddinUtils";
-import {
-  templateSingleRoute,
-  generateCourrierRoute as generateCourrierRouteApi,
-  courriersSauvegardesRoute,
-  courriersGeneresRoute,
-} from "@/Api/ApiRoutes";
-import "./Generer.scss";
-import Signature from "../Parametres/Signature/Signature";
-import { SignatureContext } from "@/context/SignatureProvider";
-import Branches from "./Branches";
-import TypesDocuments from "./TypesDocuments";
-import Template from "@/types/Template.type";
-import { contextManager } from "@/services/ContextManager";
-import { debounce } from "ts-debounce";
+// import { putInfosUserRoute } from "Api/ApiRoutes";
+// import { useDelayApi } from "hooks/useApi";
+import { useOidcAccessToken, useOidcUser } from "../useOidc";
+import React, { FC, useEffect } from "react";
+import "./SendUserInfos.scss";
+import { useMutation } from "react-query";
+import { getUserInfos } from "@/api/apifunctions/user";
+//import { HTTP } from "@/api/config/apiHandler";
+import userStore from "@/stores/userStore";
+import { setApiToken } from "@/api/config/apiHandler";
+import useFilters from "@/pages/Filters/useFilters";
+
 interface Props {
   className?: string;
+  children?: React.ReactNode;
+  //onSuccess: (successData: any) => void;
 }
 
-const Generer: FC<Props> = ({ className = "" }) => {
-  const { id } = useParams() as { id: string };
-  const { data: dataCourrier, loaded: dataCourrierLoaded } = useApi(templateSingleRoute, { id });
-  const courrier = dataCourrier ? (dataCourrier as Document) : null;
-  const typeCourrier = courrier?.type as string; // CTR or CLT
-  const { call: callGenerateCourrier, loaded: generateCourrierLoaded } = useDelayApi(generateCourrierRouteApi);
-  const [wordEditInProgress, setWordEditInProgress] = useState<boolean>(false);
-  const navigate = useNavigate();
-  const cache = useCache();
-  const [formRef, setFormRef] = useState<HTMLFormElement | null>(null);
-  const [formDatas, setFormDatas] = useState<any>({});
-  const context = contextManager.getContext();
-  const [numContratOrClient, setNumContratOrClient] = useState<string | undefined>(undefined);
-  const { numContrat: contextNumContrat, numClient: contextNumClient } = context || { numContrat: null, numClient: null };
+const SendUserInfos: FC<Props> = ({ children }) => {
+  const { setUser, setAuthToken } = userStore();
+  const { filtersInUrl, setFilters } = useFilters();
+
+
+  const { oidcUser } = useOidcUser();
+  const { email, axa_uid_racf, name, axa_type, axa_uid_rdu } = (oidcUser as any) || {};
+  const [userAllowed, setUserAllowed] = React.useState(false);
+  const { accessToken } = useOidcAccessToken();
+
+  const {
+    mutate: getUser,
+    isLoading,
+    isError,
+    
+  } = useMutation(
+    async () => {
+      return await getUserInfos({
+        idRacf: axa_uid_racf,
+        email,
+        name,
+        idRdu: axa_uid_rdu,
+        axaType: axa_type,
+      });
+    },
+    {
+      onSuccess({ successData, authToken }) {
+        setUserAllowed(true);
+        setUser({
+          ...successData
+        });
+
+        if (!filtersInUrl) {
+          delete successData.defaultRequest.pagination;
+          setFilters(successData.defaultRequest);
+        }
+      },
+    }
+  );
 
   useEffect(() => {
-    if ((contextNumContrat || contextNumClient) && typeCourrier) {
-      setNumContratOrClient(
-        contextNumContrat || contextNumClient ? (typeCourrier === "CTR" ? contextNumContrat : contextNumClient) : undefined
-      );
-    }
-  }, [contextNumContrat, contextNumClient, typeCourrier]);
-  
-
-  // should use formData object instead of this
-  const [signatureCheck, setSignatureCheck] = useState<boolean>(true);
-  const { signature } = useContext(SignatureContext);
-
-  function updateFormDatas(ref?: any) {
-    let fixedRef = ref?.target?.form || ref;
-
-    if (formRef || fixedRef) {
-      const formDatasObject = Object.fromEntries(new FormData(formRef || fixedRef).entries());
-      setFormDatas((formDatas: any) => formDatasObject);
-    }
-  }
-
-  const onRef = (ref: HTMLFormElement) => {
-    setFormRef(ref);
-    // add a DOM observer to trigger updateFormData on load, its an ugly fix for the form button générer not being refreshed on load
-    const observer = new MutationObserver(
-      debounce((mutations: MutationRecord[], observer: MutationObserver) => {
-        updateFormDatas(ref);
-      }, 100)
-    );
-    setTimeout(() => {
-      observer.disconnect();
-    }, 6000);
-    observer.observe(ref, { childList: true, subtree: true });
-  };
-
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    try {
-      // remove empty values from formDatas
-      const tmpFormDatas = { ...formDatas };
-      Object.keys(tmpFormDatas).forEach((key) => (tmpFormDatas[key] == null || tmpFormDatas[key] === "") && delete tmpFormDatas[key]);
-      const { agence, signature, ...restFormDatas } = tmpFormDatas;
-      const { contractNumber, clientNumber } = restFormDatas;
-      const response = await callGenerateCourrier({
-        ...restFormDatas,
-        id,
-        agenceId: agence,
-        signature: !!signature,
-      });
-
-      if (response) {
-        window.open("ms-word:ofe|u|" + response.webUrl, "_blank");
+    (async () => {
+      try {
+        if (!name || !accessToken) return;
+        if (accessToken) {
+          setAuthToken(accessToken);
+          setApiToken(accessToken);
+        }
+        await getUser();
+      } catch (error) {
+        console.error("Error while sending user infos to api", error);
       }
-      cache.clearAllCacheByName(courriersSauvegardesRoute.id);
-      cache.clearAllCacheByName(courriersGeneresRoute.id);
-
-      setWordEditInProgress(true);
-
-      addListenToBroadcast({
-        id,
-        identifier: contractNumber || clientNumber,
-        message: ["DOCUMENT_SAVED", "DOCUMENT_ARCHIVED"],
-        callback: onDocumentSaved,
-      });
-      contextManager.clearContext();
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const onDocumentSaved = (dataResponse: any) => {
-    const message = dataResponse?.message as string;
-    // empty cacheManager for courriersGeneresRoute ou courriersSauvegardes and redirect to Mes courriers
-    if (message === "DOCUMENT_SAVED") cache.clearAllCacheByName(courriersSauvegardesRoute.id);
-    if (message === "DOCUMENT_ARCHIVED") cache.clearAllCacheByName(courriersGeneresRoute.id);
-
-    setWordEditInProgress(false);
-    const redirectRoute = getRouteItemFromId(courriers);
-    const redirectionLocation = redirectRoute?.path || "/";
-    navigate(redirectionLocation);
-  };
-
-  const generateEnabled =
-    formDatas.agence && (formDatas.contractNumber || formDatas.clientNumber) && formDatas.ecmDocumentType && formDatas.branch;
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, axa_uid_racf, name, axa_type, accessToken]);
   return (
-    <div className={`Generer ${className}`}>
-      <Loader loaded={generateCourrierLoaded} loaderOver={true} message="Récupération du document...">
-        <main>
-          <h2>Générer le courrier</h2>
-          <Form className="mt-md" onChange={updateFormDatas} onSubmit={onSubmit} onInit={updateFormDatas} onRef={onRef}>
-            <Loader loaded={dataCourrierLoaded} loaderOver={true} message="Chargement des informations du document">
-              <h3>Information courrier</h3>
-              <div className="max-width-600">
-                <fieldset className="af-form-grid">
-                  <FormItem id="id-courrier-name" type="view" label="Nom du modèle" name="courrierName" value={courrier?.title} />
-                  {/* <FormItem
-                    id="id-courrier-type"
-                    type="select"
-                    label="Type de courrier"
-                    name="courrierType"
-                    value={typeCourrier}
-                    datas={typesCourrier}
-                  /> */}
-                  <FormItem
-                    id="id-contract-or-client-number"
-                    data-testid="id-contract-or-client-number"
-                    type="text"
-                    label={typeCourrier === "CTR" ? "Numéro de contrat" : "Numéro de client"}
-                    placeholder={"Saisir un numéro de " + (typeCourrier === "CTR" ? "contrat" : "client")}
-                    name={typeCourrier === "CTR" ? "contractNumber" : "clientNumber"}
-                    format={(value) => value.replace(/\s/g, "")}
-                    pattern={typeCourrier === "CTR" ? undefined : "^\\d{5,}$"}
-                    maxLength={16}
-                    patternMessage={`Le numéro de ${
-                      typeCourrier === "CTR" ? "contrat" : "client"
-                    } doit être composé au minimum de 5 chiffres`}
-                    errorMessage={`Le numéro de ${
-                      typeCourrier === "CTR" ? "contrat" : "client"
-                    } doit être composé  au minimum de 5 chiffres`}
-                    autoFocus
-                    value={numContratOrClient}
-                    onChange={(e) => setNumContratOrClient(e.target.value)}
-                 
-                    required
-                  />
-                  {courrier ? (
-                    <>
-                      <Branches id={id} />
-  
-                      <TypesDocuments template={courrier as Template} />
-                
-                    </>
-                  ) : null}
-                </fieldset>
-              </div>
-            </Loader>
-
-            <Agences autoSelectFirstIfOne={true} onAgenceAddOrDelete={updateFormDatas} />
-
-            <h3>Signature</h3>
-            <FormItem
-              className="af-form-checkbox af-form-item_label--left af-form-item--floating-checkbox af-item--align-label"
-              type="checkbox"
-              name="signature"
-              id="signature"
-              label="Afficher la signature"
-              childrenClickable={true}
-              checked={signatureCheck}
-              onChange={(event) => setSignatureCheck(event.target.checked)}
-              value={true}
-              hideInput={!signature}
-            >
-              <Signature viewMode="image" className="Signature--small af-panel" />
-            </FormItem>
-            <div className="row align-items-center mt-md">
-              <button
-                type="submit"
-                className="btn btn--primary"
-                disabled={!generateEnabled}
-                id="id-button-generate-courrier"
-                data-testid="id-button-generate-courrier"
-              >
-                Générer le courrier
-              </button>
-              <div className="generation-courrier-message">
-                <Loader inline={true} loaded={!wordEditInProgress} message="Edition du document word en cours..."></Loader>
-              </div>
-            </div>
-          </Form>
-        </main>
-      </Loader>
-    </div>
+    <>
+      {isLoading ? (
+        <div className="bigCenteredMessage">Chargement de Spoolnet en cours</div>
+      ) : !userAllowed || isError ? (
+        <div className="bigCenteredMessage">
+          Vous n'avez pas accès à Spoolnet, veuillez contacter votre administrateur.
+        </div>
+      ) : (
+        children
+      )}
+    </>
   );
 };
 
-export default Generer;
-on peux  que declencher chmps obligatoir a larriver a la page  sans qluicer sur la form pour apprattre  car cest le cas maintenat 
+export default SendUserInfos;
+import React, { FC, useEffect } from "react";
+import { OidcProvider, OidcSecure, useOidc, useOidcAccessToken } from "@axa-fr/react-oidc";
+import { OIDC_CONFIGURATION } from "@/config/config-env";
+import SendUserInfos from "./SendUserInfos";
+
+type Props = {
+  children?: React.ReactNode;
+};
+
+const Oidc: FC<Props> = ({ children }) => {
+
+/*   if (document.location.search.includes("error=access_denied")) {
+
+    return (
+      <div className="bigCenteredMessage">
+        Vous n'avez pas accès à Spoolnet, veuillez contacter votre administrateur.
+      </div>
+    );
+  } */
+  console.log('yy', OIDC_CONFIGURATION);
+  return (
+    <OidcProvider configuration={OIDC_CONFIGURATION}>
+      <OidcSecure>
+        <SendUserInfos>{children}</SendUserInfos>
+      </OidcSecure>
+    </OidcProvider>
+  );
+};
+
+export default Oidc;
+/**
+ *  This class decorate oidc hooks from react-oidc and return mocked hooks if oidc is disabled
+ *  Use only in development mode
+ */
+export { useOidc, useOidcAccessToken, useOidcUser, OidcSecure } from "@axa-fr/react-oidc";
+
+import { BrowserRouter } from "react-router-dom";
+import { QueryClientProvider, QueryClient } from "react-query";
+import "./App.scss";
+import "./theme.scss";
+import ContainerApp from "@/pages/Container/containerApp";
+// import configEnv from "@/config/config-env";
+import AppWithProviders from "./Providers";
+import ModalContainer from "react-modal-promise";
+
+// !Mocking api calls in development mode
+// if (configEnv.useMSW) {
+//   const { worker } = await import("./mocks/mswWorker");
+//   await worker.start({
+//     onUnhandledRequest: "bypass",
+//   });
+// }
+
+const App = () => {
+  const queryClient = new QueryClient();
+  return (
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <AppWithProviders>
+          <ContainerApp />
+          <ModalContainer />
+        </AppWithProviders>
+      </QueryClientProvider>
+    </BrowserRouter>
+  );
+};
+
+export default App;
+import { useChainProviders } from "react-flat-providers";
+import Oidc from "./oidc/Oidc";
+import GlobalAlertProvider from "./components/GlobalAlert/GlobalAlertContext";
+/** provide all the providers and flatten them. */
+import { ReactNode } from "react";
+
+
+type AppWithProvidersProps = {
+  children: ReactNode;
+};
+
+const AppWithProviders = ({ children }: AppWithProvidersProps) => {
+  const FlatChainedProviders = useChainProviders().add(GlobalAlertProvider).add(Oidc).make();
+/*   const a = useOidc();
+  console.log(a);
+  console.log('FlatChainedProviders', FlatChainedProviders); */
+ // return <p> bienvenue</p>
+ return  <FlatChainedProviders>{children}</FlatChainedProviders>;
+};
+
+export default AppWithProviders;
+import { TokenAutomaticRenewMode, TokenRenewMode } from "@axa-fr/react-oidc";
+import devConfig from "./env-dev.json";
+import stageConfig from "./env.json";
+
+const configEnv: any =
+  import.meta.env.MODE === "development" || import.meta.env.MODE === "test" ? devConfig : stageConfig;
+configEnv.api_url = window.CY_API_URL || import.meta.env.VITE_API_URL || "/api/v1/";
+configEnv.api_url = configEnv.api_url.replace(/\/+$/, "");
+
+configEnv.useMSW = import.meta.env.VITE_API_MOCK && !window.CY_API_URL;
+
+/* OIDC */
+export const OIDC_MOCK_ENABLED = import.meta.env.VITE_OIDC_MOCK_ENABLED === "true";
+
+const OIDC_SERVER_CONFIG = configEnv.OIDC_CONFIGURATION;
+
+OIDC_SERVER_CONFIG.redirect_uri = window.location.origin + OIDC_SERVER_CONFIG.redirect_uri;
+OIDC_SERVER_CONFIG.token_renew_mode = TokenRenewMode.access_token_invalid;
+OIDC_SERVER_CONFIG.token_automatic_renew_mode = TokenAutomaticRenewMode.AutomaticOnlyWhenFetchExecuted;
+
+if (import.meta.env.VITE_LOCAL_ENV) {
+  OIDC_SERVER_CONFIG.authority = "/maam/v2";
+}
+
+export const OIDC_CONFIGURATION = OIDC_SERVER_CONFIG;
+export default configEnv;
+{
+  "api_url": "http://localhost:3000",
+  "OIDC_CONFIGURATION": {
+    "client_id": "9fe8b203",
+    "redirect_uri": "/authentication/callback",
+    "scope": "email openid profile urn:axa:france:SpoolnetNG urn:axa:france:distribution urn:axa:france:tpag urn:axa:france:wac",
+    "authority": "https://onelogin.dev.axa.com",
+    "service_worker_only": false
+  }
+}
+
+lorsque je le correct avec quelqun inconnu  jai ca dans url et  qui se boucle dan infini http://localhost:3000/authentication/callback?error_description=Not+authorized+-+User+not+known&iss=https%3A%2F%2Fonelogin.dev.axa.com&state=BB3TRzf3tNhDC0Cl&error=access_denied#.  mais moi je veux que se sois message comme si vous navze pas acces a spoolnet  car je nai pas amimer la facon comme ca 
+  if (document.location.search.includes("error=access_denied")) {
+
+    return (
+      <div className="bigCenteredMessage">
+        Vous n'avez pas accès à Spoolnet, veuillez contacter votre administrateur.
+      </div>
+    );
+  
