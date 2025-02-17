@@ -1,230 +1,82 @@
-import React, { useEffect } from "react";
-import { useMutation } from "react-query";
-import Loader from "@axa-fr/react-toolkit-loader";
-import configStore from "@/stores/configStore";
-import { fusionDocumentsWithEsignTreatment } from "@/api/apifunctions/fusionDocumentsWithEsignTreatment";
-import { preprintedList } from "@/api/apifunctions/preprintedList";
-import { subscribers } from "@/api/apifunctions/subscribers";
-
-import { updateEsignDocSent } from "@/api/apifunctions/updateEsignDocSent";
-import { IDocument } from "@/types/documents";
-import { addLeadingZeros, getDomainForUrl, getEsignUrl } from "@/utils/index";
-import { documentsByActs } from "@/api/apifunctions/documentsByActs";
-
-import {
-  allActsAreEsign,
-  allDocAreIL101,
-  allDocsAreEsign,
-  allDocsHaveSameClientNumber,
-  allDocsHaveSameContractNumber,
-  allDocsHaveSameSubscriberNumber,
-  getActsNotEsign,
-  getDocsEsign,
-  getDocsNotEsign,
-  getDocsToDemat,
-  getDocumentsIds,
-} from "@/utils/docUtils";
-import userStore from "@/stores/userStore";
-import { showDematNotEsignModal } from "./modals/modalNotEsign";
-import { showDematModal } from "./modals/modalDemat";
-import { showModalNotSameNumber } from "./modals/modalNotSameNumber";
-import { showModalPrePrint } from "./modals/modalPrePrint";
-import { ged } from "@/api/apifunctions/ged";
-import { ResolverPropsType } from "@/types/ResolverDataType";
-import useDocFilters from "@/hooks/useDocFilters";
-import { mergeGedWithDocs } from "@/utils/getEsignUrl";
-import { useAlert } from "@/components/GlobalAlert/useAlert";
-
-const EsignResolver: React.FC<ResolverPropsType> = ({ data, resolverSuccess, resolverCancel }) => {
-  const profile = userStore()?.user?.profile || { esign: false, demat: false };
-  const { alertError } = useAlert();
-
-  const { docFilters } = useDocFilters();
-
-  const { config } = configStore(); 
-
-  const { mutateAsync: getdocumentsByActs, isLoading: docsByActsLoader } = useMutation(documentsByActs);
-  const { mutateAsync: getPreprintedList, isLoading: statusLoader } = useMutation(preprintedList);
-  const { mutateAsync: fusionDocuments, isLoading: fusionLoader } = useMutation(fusionDocumentsWithEsignTreatment);
-
-  const { mutateAsync: getSubscribers, isLoading: subscribersLoader } = useMutation(subscribers, {
-    onSuccess: async (data) =>
-      data?.successData?.subscribers
-        ?.split(";")
-        .filter((el: any, index: number) => data?.successData?.subscribers.indexOf(el) !== index)
-        .map((el: any) => addLeadingZeros(el.toString(), 10))
-        .join(";"),
-  });
-  const { mutateAsync: getGed, isLoading: channelLoader } = useMutation(ged);
-
-  /** Function to do esign docs
-   *  Note : This algorithm exists as a activity diagram in docs folders
-   */
-  const startEsignAsync = async () => {
-    let { acts, docs, axapac } = data;
-
-    // if Act view
-    if (acts) {
-      if (!allActsAreEsign(acts)) {
-        await showDematNotEsignModal({ data: getActsNotEsign(acts), modeAct: true });
-        resolverCancel();
-        return;
-      }
-
-      const docsFromActs = await getdocumentsByActs({
-        docFilters,
-        actsIds: acts?.map((act: any) => act.id),
-      });
-
-      docs = getDocsEsign(docsFromActs);
-    }
-
-    // If no esign doc, show message and end
-    if (!docs || !docs.length || !allDocsAreEsign(docs)) {
-      await showDematNotEsignModal({ data: getDocsNotEsign(docs || []), modeAct: false });
-      resolverCancel();
-      return;
-    }
-
-    // check if all docs are same contract number or same client number and same subscriber number
-    if (
-      !allDocsHaveSameContractNumber(docs) ||
-      !allDocsHaveSameClientNumber(docs) ||
-      !allDocsHaveSameSubscriberNumber(docs)
-    ) {
-      await showModalNotSameNumber({ documents: docs });
-      resolverCancel();
-      return;
-    }
-
-    const documentsIds = getDocumentsIds(docs);
-
-    // if demat profile and alls docs are not IL101 and some docs are demat then show demat modal and demat them
-    if (!axapac && !allDocAreIL101(docs) && profile.demat) {
-      const docsToDemat = getDocsToDemat(docs);
-      if (docsToDemat.length > 0) {
-        if (allDocsHaveSameContractNumber(docsToDemat) || allDocsHaveSameClientNumber(docsToDemat)) {
-          const dematDocName =
-            docsToDemat[0].documentOptions.typeLetter === "DEVIS_PROJET_ETUDE" ? "Devis" : "Conditions Particulières";
-          const result = await showDematModal(
-            {
-              document: docs[0],
-            },
-            {
-              title: `Avant de signer électroniquement`,
-              step2Title: `Envoi des ${dematDocName}`,
-              step2Content: (
-                <div>
-                  <h3 className="af-header__title">
-                    <i className="glyphicon glyphicon-file" /> {dematDocName}
-                  </h3>
-                  <p>en cours d'impression</p>
-                  <Loader mode="get" text=" " classModifier="static">
-                    <></>
-                  </Loader>
-                </div>
-              ),
-            }
-          );
-          if (!result.success) {
-            resolverCancel();
-            return;
-          }
-        } else {
-          await showModalNotSameNumber({ documents: docs });
-          resolverCancel();
-          return;
-        }
-      }
-    }
-
-    // get preprints before sending to esign
-    const preprintedsList = await getPreprintedList(documentsIds);
-    let preprintedId: string;
-    if(preprintedsList.length === 0){
-      preprintedId= ''
-    }else{ 
-    if (preprintedsList.length !== 1) {
-      const preprintModalResult = await showModalPrePrint({ preprinteds: preprintedsList });
-      if (!preprintModalResult.success) {
-        resolverCancel();
-        return;
-      }
-      preprintedId = preprintModalResult.preprinted;
-    } else {
-      preprintedId = preprintedsList[0].id;
-    }
-   }
-    // if (preprintedId) {
-    await fusionDocuments({
-      idDocumentList: documentsIds,
-      idPreprinted: preprintedId as string,
-    });
-    // }
-
-    try {
-      await debranchementEsign(docs);
-    } catch (e) {
-      alertError("Une erreur est survenue lors de la génération de l'url de e-signature");
-      resolverCancel();
-    }
-    await updateEsignDocs(documentsIds);
-  };
-
-  const debranchementEsign = async (docs: IDocument[]) => {
-    const documentsIds = getDocumentsIds(docs);
-
-    try {
-      const [subscribers, ged] = await Promise.all([await getSubscribers(documentsIds), await getGed(documentsIds)]);
-      const docsGed = mergeGedWithDocs(docs, ged.successData);
-
-      const esignObject = {
-        identifiantAbonne: subscribers?.successData || [],
-        urlEsign: config ? getDomainForUrl(config.urls.esign, config) : "",
-        ged: docsGed,
-        token: docsGed[0]?.token,
-      };
-
-      let url: any = getEsignUrl(docs, esignObject, config);
-      window.open(url, "_blank");
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const startEsign = async () => {
-    await startEsignAsync();
-  };
-
-  const { mutateAsync: updateEsignDocs, isLoading: updateLoader } = useMutation(updateEsignDocSent, {
-    onSuccess: () => {
-      resolverSuccess();
-    },
-    onError: () => {
-      resolverCancel();
-    },
-  });
+import { FC, useEffect, useMemo, useState } from "react";
+import FormItem from "@/toolkit/Components/Form/FormItem";
+import { useDelayApi } from "@/hooks/useApi";
+import { allProfilesRoute } from "@/Api/ApiRoutes";
+import { Profile } from "../types/Profile.type";
+interface Props {
+  className?: string;
+  onChange?: (value: string) => void;
+  value?: string;
+}
+const Profiles: FC<Props> = ({ className = "", onChange, value }) => {
+  const { call: loadAllProfiles } = useDelayApi(allProfilesRoute);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const profileDatas = useMemo(
+    () => [{ label: "Sélectionnez un Profil", value: "" }, ...profiles.map(({ name, id }: Profile) => ({ label: name, value: id }))],
+    [profiles]
+  );
 
   useEffect(() => {
-    if (data?.docs || data?.acts) startEsign();
-  }, [data?.docs, data?.acts]);
-
-  return (
-    <Loader
-      mode={
-        subscribersLoader || fusionLoader || statusLoader || channelLoader || updateLoader || docsByActsLoader
-          ? "get"
-          : "none"
+    (async () => {
+      try {
+        const response = await loadAllProfiles();
+        setProfiles(response);
+      } catch (error) {
+        console.error("Erreur lors du chargement des profils", error);
+        setProfiles([]);
       }
-      text="Chargement en cours"
-    >
-      {" "}
-    </Loader>
-  );
+    })();
+  }, [loadAllProfiles]);
+  const handleChange = (event: React.ChangeEvent<HTMLFormElement>) => {
+    console.log(event.target,"mmmmmm")
+    onChange?.(event.target.value);
+  };
+  return profiles && profiles.length ? (
+    <FormItem
+      id="id-profile"
+      labelStyle={className}
+      type="select"
+      label="Profil"
+      name="authorities"
+      placeholder="Sélectionner un Profile"
+      required={true}
+      visibleValue={profiles.length === 1 ? profiles[0].name : undefined}
+      value={value || (profiles.length === 1 ? profiles[0].name : "")}
+      datas={profileDatas}
+      onChange={handleChange}
+    />
+  ) : null;
 };
+export default Profiles;
 
-export default EsignResolver;
 
-dans ce code jai fai ca    if(preprintedsList.length === 0){
-      preprintedId= ''
-    } pour ne ma afficher showmidal  est ce que cest bien le if et le else 
+voci le bakcend  ce qui retourne [
+  {
+    "id": 1,
+    "name": "ADMIN"
+  },
+  {
+    "id": 2,
+    "name": "CONTRIB"
+  },
+  {
+    "id": 3,
+    "name": "AGT"
+  },
+  {
+    "id": 4,
+    "name": "AXA_PART"
+  },
+  {
+    "id": 60,
+    "name": "RETRAITE_COLLECTIVE"
+  },
+  {
+    "id": 61,
+    "name": "PREV_COLLECTIVE"
+  },
+  {
+    "id": 62,
+    "name": "RENTES_INDIVIDUELLES"
+  }
+] moi je veux enboyer name et pas id
