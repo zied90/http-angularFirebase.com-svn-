@@ -89,6 +89,42 @@ vi.mock(import("react"), async (importOriginal) => {
   }
 })
 
+import { FC, useEffect, useMemo } from "react";
+import "./AppContent.scss";
+import { useRoutes, RouteObject } from "react-router";
+import { getRoutesList, setAppTitleFromLocation } from "@/config/Routes";
+import { useLocation } from "react-router-dom";
+import { useOidcUser } from "@/oidc/useOidc";
+import { useAdmin } from "@/services/AdminContext";
+
+interface Props {}
+
+const AppContent: FC<Props> = () => {
+  const { oidcUser } = useOidcUser();
+  const { isAdmin } = useAdmin();
+  const routes: RouteObject[] = useMemo(
+    () =>
+      getRoutesList()
+        .filter(({ filter }) => !filter || filter({ user: oidcUser , isAdmin}))
+        .map(({ id, path, element }) => ({
+          path,
+          element,
+        })),
+    [oidcUser,isAdmin]
+  );
+
+  const routesElements = useRoutes(routes);
+
+  let location = useLocation();
+  useEffect(() => {
+    setAppTitleFromLocation(location.pathname, "Ellipse - {pageTitle}");
+  }, [location]);
+  return <div className="AppContent container">{routesElements}</div>;
+};
+
+export default AppContent;
+
+
  ❯ src/services/AdminContext.tsx:6:22
       4|  setIsAdmin: (value: boolean) => void;
       5| }
