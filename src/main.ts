@@ -357,4 +357,52 @@ const NavigationList: FC<Props> = ({ className = "", items }) => {
 };
 
 export default NavigationList;
+                                      import { putInfosUserRoute } from "@/Api/ApiRoutes";
+import { useDelayApi } from "@/hooks/useApi";
+import { useOidcUser } from "../useOidc";
+import { FC, useEffect, useState } from "react";
+import "./SendUserInfos.scss";
+
+interface Props {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+const SendUserInfos: FC<Props> = ({ children }) => {
+  const { oidcUser } = useOidcUser();
+  const { email, axa_uid_racf, name, axa_uid_rdu, axa_type } = (oidcUser as any) || {};
+  const { call, loaded } = useDelayApi(putInfosUserRoute);
+  const [userAllowed, setUserAllowed] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+      const response=await call({ email, userNumber: axa_uid_racf, name, axaUiRdu: axa_uid_rdu, axaType: axa_type });
+      if (response?.authorities) {
+        (oidcUser as any).member_of = response.authorities;
+      }
+        setUserAllowed(true);
+      } catch (error) {
+        console.error("Error while sending user infos to Maam", error);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, axa_uid_racf, name, axa_type]);
+  return (
+    <>
+      {loaded ? (
+        userAllowed ? (
+          children
+        ) : (
+          <div className="bigCenteredMessage">Vous n'avez pas accès à Ellipse, veuillez contacter votre administrateur.</div>
+        )
+      ) : (
+        <div className="bigCenteredMessage">Chargement de Ellipse en cours</div>
+      )}
+    </>
+  );
+};
+
+export default SendUserInfos;
+
  pour la gestion des role  pour donner que les bloque admin que pour les utilisateur admin  jai fait dans filter mais des fois ca marche pas et je veux autre facon plus proppre  avec protectezd routed
