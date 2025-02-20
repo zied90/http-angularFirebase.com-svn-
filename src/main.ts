@@ -261,7 +261,8 @@ const FlowList: FunctionComponent<RouteComponentProps<Params> & Props> = ({match
                 dispatch({type: "ON_DISPLAY_MODAL_SAVE", idFlux: 0, isModalSave: false, pdfNumber: pdfN})
             });
     };
-
+console.log('test', type, name, dateCreation, pdfNumber, status, submit);
+//voci les filtere agarder  et tu peux faire ca  pathname: `/open/${id}?ici tu rajoute les critere  que  tu va garder `
     return (
         <>
             <Loader mode={loaderMode}>
@@ -488,7 +489,7 @@ const FlowList: FunctionComponent<RouteComponentProps<Params> & Props> = ({match
                                             <Table.Td>
                                                 <Link className="af-btn--circle" title="Ouvrir" role="button"
                                                       to={{
-                                                          pathname: "/open/" + id
+                                                          pathname: `/open/${id}?2`
                                                       }}>
                                                     <i className="glyphicon glyphicon-folder-open"/>
                                                 </Link>
@@ -599,6 +600,7 @@ const FlowList: FunctionComponent<RouteComponentProps<Params> & Props> = ({match
 
 
 export default FlowList;
+
 
 cest ici le bouton pour aller detail : <Link className="af-btn--circle" title="Ouvrir" role="button"
                                                       to={{
@@ -1057,3 +1059,5 @@ const DocumentsEnhance = enhanceAuth(Documents);
 
 export default DocumentsEnhance;
   je veux lorsque  je clique sur Retour à la liste des fluxxxxxxxx je trouve les critere des recherche que deja remmpli
+ et pour infoi :console.log('test', type, name, dateCreation, pdfNumber, status, submit);
+//voci les filtere agarder  et tu peux faire ca  pathname: `/open/${id}?ici tu rajoute les critere  que  tu va garder `
