@@ -1,4 +1,4 @@
-
+ search: `?type=${state.search.editionType}&name=${state.search.editionName}&receptionDate=${state.search.receptionDate}&fluxStatus=${state.search.fluxStatus}&fluxSubmit=${state.search.fluxSubmit}`,
    <Link
                         className="af-btn--circle"
                         title="Ouvrir"
