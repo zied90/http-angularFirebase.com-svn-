@@ -1,105 +1,103 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
-import { putInfosUserRoute } from "@/Api/ApiRoutes";
-import { useDelayApi } from "@/hooks/useApi";
-import { useOidcUser } from "@/oidc/useOidc";
+import { ChangeEvent } from "react";
+import { useQuery, useQueryClient } from "react-query";
+import { Title } from "@axa-fr/react-toolkit-layout-header";
+import Loader from "@axa-fr/react-toolkit-loader";
+import HeaderApp from "@/components/header/header";
+import FooterApp from "@/components/footer/footer";
+import { SwitchToggle, RefreshButton } from "@/components/filter";
+import DocumentsApp from "@/pages/Documents/documentsApp";
+import ActsApp from "@/pages/Documents/ActsApp";
+import FilterApp from "@/pages/Filters/filterApp";
+import userStore from "@/stores/userStore";
+import configStore from "@/stores/configStore";
+import massActionStore from "@/stores/massActionStore";
+import MassActionResolver from "@/resolvers/massActionResolver";
+import { GetConfiguration } from "@/api/apifunctions/configuration";
+import usePagination from "@/hooks/usePagination";
+import useSort from "@/components/SortButton/useSort";
+import { useSearchParams } from "react-router-dom";
+import GlobalAlert from "@/components/GlobalAlert";
 
-// Define the types for our user data
-interface OidcUserData {
-  email?: string;
-  axa_uid_racf?: string;
-  name?: string;
-  axa_uid_rdu?: string;
-  axa_type?: string;
-  [key: string]: any; // For any other properties in the OIDC user object
-}
-
-interface ApiUserData {
-  authorities?: string[];
-  [key: string]: any; // For any other properties in the API response
-}
-
-interface UserContextType {
-  oidcUser: OidcUserData | null;
-  apiUser: ApiUserData | null;
-  isAdmin: boolean;
-  isAllowed: boolean;
-  isLoading: boolean;
-  error: Error | null;
-}
-
-// Create the context
-const UserContext = createContext<UserContextType | undefined>(undefined);
-
-// Create the provider component
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { oidcUser } = useOidcUser();
-  const { email, axa_uid_racf, name, axa_uid_rdu, axa_type } = (oidcUser as OidcUserData) || {};
-
-  const { call, loaded } = useDelayApi(putInfosUserRoute);
-  const [apiUser, setApiUser] = useState<ApiUserData | null>(null);
-  const [isAllowed, setIsAllowed] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const apiCallMadeRef = useRef(false);
-
-  useEffect(() => {
-    // Skip if we don't have the required user data
-    if (!email || !axa_uid_racf) return;
-
-    // Skip if we've already made the API call with this user data
-    if (apiCallMadeRef.current) return;
-
-    const fetchUserData = async () => {
-      try {
-        apiCallMadeRef.current = true;
-        const response = await call({
-          email,
-          userNumber: axa_uid_racf,
-          name,
-          axaUiRdu: axa_uid_rdu,
-          axaType: axa_type,
-        });
-
-        setApiUser(response);
-
-        if (response?.authorities) {
-          setIsAdmin(response.authorities.includes("ADMIN"));
-        }
-
-        setIsAllowed(true);
-      } catch (error) {
-        console.error("Error while sending user infos to API", error);
-        setError(error instanceof Error ? error : new Error("Unknown error"));
-        // Reset the flag so we can try again if needed
-        apiCallMadeRef.current = false;
-      }
-    };
-
-    fetchUserData();
-
-    // Reset the flag when user data changes
-    return () => {
-      apiCallMadeRef.current = false;
-    };
-  }, [email, axa_uid_racf, name, axa_uid_rdu, axa_type]); // Removed 'call' from dependencies
-
-  const contextValue: UserContextType = {
-    oidcUser: (oidcUser as OidcUserData) || null,
-    apiUser,
-    isAdmin,
-    isAllowed,
-    isLoading: !loaded,
-    error,
+const ContainerApp: React.FC = () => {
+  const { setMassAction } = massActionStore();
+  const { token } = userStore();
+  const { getParamsKeys: getPaginationParamKeys } = usePagination();
+  const { getParamsKeys: getSortParamKeys } = useSort();
+  const { setConfig } = configStore();
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const groupByAct = searchParams.get("groupact") === "true";
+  const setGroupByAct = (value: boolean) => {
+    const paramsKeys = [...getPaginationParamKeys(), ...getSortParamKeys()];
+    const newSearchParams = new URLSearchParams(searchParams);
+    paramsKeys.forEach((key) => newSearchParams.delete(key));
+    // keep the number of items per page between switch of document/acts
+    if (searchParams.get("numberItems")) {
+      newSearchParams.set("numberItems", searchParams.get("numberItems") as string);
+    }
+    newSearchParams.set("groupact", value.toString());
+    setSearchParams(newSearchParams);
   };
 
-  return <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>;
+  const { isLoading: isLoadingConfig } = useQuery(["configuration", token], () => GetConfiguration(), {
+    onSuccess({ successData }) {
+      setConfig(successData);
+    },
+    enabled: Boolean(token),
+    refetchOnWindowFocus: false,
+  });
+
+  /** End authentication */
+
+  const switchList = (e: ChangeEvent<HTMLInputElement>) => {
+    setGroupByAct(e.target.checked);
+    setMassAction([]);
+  };
+
+  // const { mutateAsync: updateActs, isLoading: isLoadingActs } = useMutation(findDocumentsByacts, {
+  //   onSuccess({ successData }) {
+  //     setDocumentsByAct(successData);
+  //   },
+  // });
+
+  function refreshDocumentApp() {
+    // reset pagination to page 1
+    setSearchParams({ ...Object.fromEntries(searchParams), page: "1" });
+    if (groupByAct) {
+      queryClient.refetchQueries(["findact"]);
+      // updateActs({ ...docFilters, actOpened: openedActs?.toString() });
+    } else {
+      queryClient.refetchQueries(["finddoc"]);
+    }
+  }
+
+  return (
+    <Loader mode={isLoadingConfig ? "get" : "none"} text="Chargement en cours">
+      <div data-testid="container-app">
+        <GlobalAlert />
+        <div className="af-layout__wapper">
+          <HeaderApp />
+          <Title title="Résultat de la recherche" />
+          <div className="container">
+            <div className="app-toolbar">
+              <SwitchToggle onChange={switchList} value={groupByAct} />
+              <RefreshButton onClick={refreshDocumentApp} />
+              <MassActionResolver />
+            </div>
+            <div className="row">
+              <div className="col-lg-3 col-md-12 no-space-in-mobile">
+                <FilterApp actIsDisabled={groupByAct} />
+              </div>
+              <div className="col-lg-9 col-md-12 full-space-in-mobile">
+                {groupByAct ? <ActsApp /> : <DocumentsApp />}
+              </div>
+            </div>
+          </div>
+          <FooterApp />
+        </div>
+      </div>
+    </Loader>
+  );
 };
 
-// Create the hook to use the context
-export const useUser = () => {
-  const context = useContext(UserContext);
-  if (!context) {
-    throw new Error("useUser must be used within a UserProvider");
-  }
-  return context;
-};
+export default ContainerApp;
