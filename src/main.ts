@@ -110,4 +110,18 @@ export const useUser = () => {
     "userNumber": "S875170",
     "name": "MILADI Zied",
     "axaType": "2"
-}    et en dev jai qu un seul apell je ne comprend pas quel moment ilya ces 2 apple   et comment faire
+}    et en dev jai qu un seul apell je ne comprend pas quel moment ilya ces 2 apple   et comment faire et aussi pour la reponse de la premiere appel est {
+    "id": null,
+    "email": null,
+    "userNumber": null,
+    "axaType": null,
+    "name": null,
+    "portfolios": null
+} cest normal car le backend a recuperer objet vide et pour le 2 eme il ya ca comme retour {
+    "id": 92,
+    "email": "zied.miladi.intm@axa.fr",
+    "userNumber": "S875170",
+    "axaType": "2",
+    "name": "MILADI Zied",
+    "portfolios": []
+}
