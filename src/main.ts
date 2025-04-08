@@ -44,29 +44,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Skip if we don't have the required user data
-    if (!email || !axa_uid_racf) return;
+    // if (!email || !axa_uid_racf) return;
 
     // Skip if we've already made the API call with this user data
     if (apiCallMadeRef.current) return;
 
     const fetchUserData = async () => {
       try {
-        apiCallMadeRef.current = true;
-        const response = await call({
-          email,
-          userNumber: axa_uid_racf,
-          name,
-          axaUiRdu: axa_uid_rdu,
-          axaType: axa_type,
-        });
+        if (email && axa_uid_racf) {
+          apiCallMadeRef.current = true;
+          const response = await call({
+            email,
+            userNumber: axa_uid_racf,
+            name,
+            axaUiRdu: axa_uid_rdu,
+            axaType: axa_type,
+          });
 
-        setApiUser(response);
+          setApiUser(response);
 
-        if (response?.authorities) {
-          setIsAdmin(response.authorities.includes("ADMIN"));
+          if (response?.authorities) {
+            setIsAdmin(response.authorities.includes("ADMIN"));
+          }
+
+          setIsAllowed(true);
         }
-
-        setIsAllowed(true);
       } catch (error) {
         console.error("Error while sending user infos to API", error);
         setError(error instanceof Error ? error : new Error("Unknown error"));
@@ -76,7 +78,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     fetchUserData();
-
     // Reset the flag when user data changes
     return () => {
       apiCallMadeRef.current = false;
@@ -103,14 +104,4 @@ export const useUser = () => {
   }
   return context;
 };
-sur la recette jai 2 appel /user 1 avec {} et 2 eme avec {
-    "email": "zied.miladi.intm@axa.fr",
-    "userNumber": "S875170",
-    "name": "MILADI Zied",
-    "axaType": "2"
-} maos en local ilya que seul appel avec {
-    "email": "zied.miladi.intm@axa.fr",
-    "userNumber": "S875170",
-    "name": "MILADI Zied",
-    "axaType": "2"
-} pk 
+ est ce que ca peut resoudre le pb de double appel ou non
