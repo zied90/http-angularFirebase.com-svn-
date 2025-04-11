@@ -1,205 +1,96 @@
-import { useEffect, useRef, useState } from "react";
-import configStore from "@/stores/configStore";
+#language: fr
 
-import "./styles.scss";
-import { getDomainForUrl } from "@/utils";
-import { Alert } from "@axa-fr/react-toolkit-all";
+Fonctionnalité: Gérer des documents AxaPac et IL101
+  Contexte:
+    Etant donné que je suis agent "D900036"
+    Etant donné que le mode d'affichage est par "document"
+    Et mon profil
+      | demat |
+      | true  |
+    Et les documents suivants
+      | id     | index | demat | esign | print | IL101 | contractNumber | clientNumber | name                         |
+      | 111111 | 1     | true  | false | false | false | 11111123457    | 22222211124  | DEVOIR_DE_CONSEIL_CAMPINGCAR |
+      | 111112 | 2     | true  | false | false | false | 11111123457    | 22222211124  | DEVOIR_DE_CONSEIL_CAMPINGCAR |
+    Et 1 préimprimé
 
-window.DEMATCG_TIMEOUT = 5000;
+  Scénario: Imprimer un document et gérer erreur dematCG
+    Et dematCG est en erreur
+    Quand j'accède à Spoolnet
+    Quand je clique sur le "bouton imprimer du document" 1 du "tableau des documents"
+    Alors la "modal DematCG" est "visible"
+    Alors le "dematCG" est "inexistant"
+    Alors je vois "Récupération des documents pré-contractuels indisponible" dans "modal DematCG"
+    Etant donné que je force les timeout à 200ms
+    Quand je clique sur "bouton remise en papier"
+    Alors je vois "Conditions Générales remises en papier" dans la "modal DematCG"
+    Alors les documents suivants sont imprimés
+      | id     |
+      | 111111 |
 
-interface DematCGProps {
-  docEl: any;
-  onLoad: (widget: any) => void;
-  onFinish: (data: any) => void;
-}
 
-declare global {
-  interface Window {
-    WidgetDemat?: any;
-  }
-}
+  Scénario: Imprimer un document et gérer dematCG en timeout
+    Etant donné que dematCG est en timeout
+    Quand j'accède à Spoolnet
+    Etant donné que je force les timeout à 200ms
+    Quand je clique sur le "bouton imprimer du document" 1 du "tableau des documents"
+    Alors le "dematCG" est "inexistant"
+    Alors la "modal DematCG" est "visible"
+    Alors je vois "Récupération des documents pré-contractuels indisponible" dans "modal DematCG"
+    Quand je clique sur "bouton remise en papier"
+    Alors je vois "Conditions Générales remises en papier" dans la "modal DematCG"
+    Alors les documents suivants sont imprimés
+      | id     |
+      | 111111 |
 
-const DematCG: React.FC<DematCGProps> = ({ docEl, onLoad, onFinish }) => {
-  console.log("dozzzzzzzcEl", docEl);
-  const [error, setError] = useState<string>("");
-  const { config } = configStore();
-  const dematElement = useRef<HTMLDivElement>(null);
-  const urlDematWidgetJsWithoutDomain = config?.urls ? config?.urls["popin.demat"] : "";
-  const urlDematWidgetJs = getDomainForUrl(urlDematWidgetJsWithoutDomain, config);
-  useEffect(() => {
-    const dematCgScriptId = "dematcgWidgetScript";
-    if (document.getElementById(dematCgScriptId)) {
-      dematCGRun();
-    } else {
-      if (urlDematWidgetJs === "") {
-        setError("Url DematJS is not defined");
-        throw new Error("Url DematJS is not defined");
-        return;
-      }
-      var script = document.createElement("script");
-      var scriptCanceled = false;
-      script.id = dematCgScriptId;
-      script.addEventListener("load", function (e) {
-        clearTimeout(timer);
-        if (!scriptCanceled) dematCGRun();
-      });
-      script.addEventListener("error", function (e) {
-        setError("Erreur lors du chargement du widget");
-      });
-      script.setAttribute("src", urlDematWidgetJs);
-      document.body.appendChild(script);
 
-      const timer = setTimeout(() => {
-        setError("Le chargement du widget a pris trop de temps");
-        scriptCanceled = true;
-      }, window.DEMATCG_TIMEOUT);
-    }
-  }, [urlDematWidgetJs]);
+  Scénario: Titres de dematCG en action <action>
+    Etant donné mon profil
+      | demat | webmail | esign | mail | print |
+      | true  | true    | true  | true | true  |
+    Et les documents suivants
+      | id     | index | demat         | esign | print | IL101 | contractNumber | clientNumber | name                | typeLetter   |
+      | 111111 | 1     | true          | true  | true  | false | 11111123457    | 22222211124  | DEVOIR_DE_CONSEIL_1 | <typeLetter> |
+      | 111112 | 2     | <demat doc 2> | true  | true  | false | 11111123457    | 22222211124  | DEVOIR_DE_CONSEIL_2 | AUTRE_TYPE   |
+    Etant donné que le mode d'affichage est par "document"
+    Quand j'accède à Spoolnet
+    Quand je sélectionne le "document 1" du "tableau des documents"
+    Et je sélectionne le "document 2" du "tableau des documents"
+    Et je sélectionne "<action>" dans "menu actions par lots"
+    Alors la "modal DematCG" est "visible"
+    Alors je vois "<titre modal>" dans le "titre de la modal"
+    Alors je vois "<onglet 1>" dans le "onglet 1 de la modal dematCG"
+    Etant donné que je force les timeout à 10000ms
+    Quand je clique sur le bouton "bouton DematCG action demat"
+    Alors je vois "<onglet 2>" dans le "onglet 2 de la modal dematCG"
+    Exemples:
+      | action                 | typeLetter               | demat doc 2 | titre modal                                   | onglet 1                              | onglet 2                            | step 2 contenu                                 |
+      | Imprimer               | TOUS                     | true        | Avant d'imprimer les Conditions Particulières | Remise des documents pré-contractuels | Impression Conditions Particulières | Conditions particulières en cours d'impression |
+      | Imprimer               | CONDITIONS_PARTICULIERES | true        | Avant d'imprimer les Conditions Particulières | Remise des documents pré-contractuels | Impression Conditions Particulières | Conditions particulières en cours d'impression |
+      | Imprimer               | DEVIS_PROJET_ETUDE       | false       | Avant d'imprimer les Devis                    | Remise des documents pré-contractuels | Impression Devis                    | Devis en cours d'impression                    |
+      | Envoyer                | DEVIS_PROJET_ETUDE       | false       | Avant d'envoyer le Devis                      | Remise des documents pré-contractuels | Envoi du devis                      | Devis Création du message Outlook              |
+      | Signature électronique | TOUS                     | true        | Avant de signer électroniquement              | Remise des documents pré-contractuels | Envoi des Conditions Particulières  | Conditions particulières en cours d'impression |
+      | Signature électronique | CONDITIONS_PARTICULIERES | true        | Avant de signer électroniquement              | Remise des documents pré-contractuels | Envoi des Conditions Particulières  | Conditions particulières en cours d'impression |
+      | Signature électronique | DEVIS_PROJET_ETUDE       | true        | Avant de signer électroniquement              | Remise des documents pré-contractuels | Envoi des Devis                     | Devis en cours d'impression                    |
 
-  const dematCGRun = () => {
-    if (!window.WidgetDemat?.run) {
-      setError("Erreur lors du chargement du widget");
-      return;
-    }
-    console.log("docEl.dematDoc", docEl.dematDoc);
-    window.WidgetDemat.run({
-      rootNode: dematElement,
-      callback: function (widget: any) {
-        onLoad(widget);
-        widget.on("dematcg-action", function (data: any) {
-          onFinish(data);
-        });
-      },
-      params: {
-        application: "spoolnet",
-        numeroContrat: docEl.contractNumber,
-        codeProduit: docEl.codeProduct,
-        dematDoc: docEl.dematDoc,
-      },
-    });
-  };
 
-  const sendPaper = () => {
-    onFinish({
-      action: "papier",
-    });
-  };
+  Scénario: Titres de dematCG en IL101
+    Etant donné mon profil
+      | demat | webmail | esign | mail | print |
+      | true  | true    | true  | true | true  |
+    Etant donné que le mode d'affichage est par "dossier"
+    Et les documents Axapac suivants
+      | index | id | demat | IL101 | contractNumber | clientNumber |
+      | 1     | 11 | true  | true  | 11111123456    | 22222211123  |
+      | 2     | 22 | true  | true  | 11111123456    | 22222211123  |
+    Quand j'accède à Spoolnet
+    Quand je clique sur "titre du bloc Axapac"
+    Alors le "bouton Envoi des CG par mail" du "document" 1 du "tableau des documents Axapac" est "visible"
+    Quand je clique sur le "bouton Envoi des CG par mail" du "document" 1 du "tableau des documents Axapac"
+    Alors je vois "Remise des Conditions Générales" dans le "titre de la modal"
+    Alors je vois "Récupération du contrat" dans le "onglet 1 de la modal dematCG"
+    Alors je vois "Remise des CG" dans le "onglet 2 de la modal dematCG"
 
-  return (
-    <div>
-      {error ? (
-        <>
-          <Alert classModifier="danger" title="Récupération des documents pré-contractuels indisponible.">
-            <p>Veuillez réessayer ou remettre les documents pré-contractuels en papier.</p>
-          </Alert>
-          <p className="mt10 txt-r">
-            <button type="button" className="btn af-btn" onClick={sendPaper} data-testid="dematcg-button-paper">
-              Remise des documents pré-contractuels en papier
-            </button>
-          </p>
-        </>
-      ) : (
-        <div ref={dematElement}></div>
-      )}
-    </div>
-  );
-};
 
-export default DematCG;
-import React, { ReactNode, useState } from "react";
-import CustomModal from "./customModal";
-import { Step, Steps } from "@axa-fr/react-toolkit-form-steps";
-import DematCG from "./dematCG";
-import Alert from "@axa-fr/react-toolkit-alert";
-import "./demat.scss";
 
-type DematCGCompleteModalProps = {
-  isOpen: boolean;
-  title: string;
-  document: any;
-  onCancel: () => void;
-  onClose: () => void;
-  //onDematActionAsync: (action: string) => Promise<any>;
-  step1Title?: string;
-  step2Title?: string;
-  step2Content?: ReactNode;
-};
-
-const DematCGModalCloseTimeout = 6000;
-
-const DematCGCompleteModal: React.FC<DematCGCompleteModalProps> = ({
-  isOpen,
-  document,
-  title,
-  onCancel,
-  onClose,
-  // onDematActionAsync,
-  step1Title = "Remise des documents pré-contractuels",
-  step2Title = "Envoi du Devis",
-  step2Content,
-}) => {
-  const [currentStep, setCurrentStep] = React.useState(1);
-  const [widgetDemat, setWidgetDemat] = useState<any>(null);
-  const [dematAction, setDematAction] = useState<any>(null);
-
-  const onDematCGLoad = (widget: any) => {
-    setWidgetDemat(widget);
-    // TODO: set dematCG action send document info to paper to the api");
-  };
-
-  const onDematCGFinish = async (data: any) => {
-    setDematAction(data.action);
-    setCurrentStep(2);
-    setTimeout(() => {
-      console.warn("dematCG closed bro");
-      onClose();
-    }, DematCGModalCloseTimeout);
-  };
-
-  const onSubmit = () => {
-    if (currentStep == 1) {
-      widgetDemat?.notify("send");
-    } else {
-      onClose();
-    }
-  };
-
-  const notifMessage =
-    dematAction === "papier" ? "Conditions Générales remises en papier" : "Conditions Générales envoyées par email";
-
-  return (
-    <CustomModal
-      title={title}
-      isOpen={isOpen}
-      onCancel={onCancel}
-      onClose={onCancel}
-      onSubmit={onSubmit}
-      //submitTitle={submitTitle}
-      cancelTitle="Annuler"
-      cancelClassName="btn af-btn--link af-btn--left af-btn--back"
-      className="dematcg-modal af-modal"
-    >
-      <div data-testid="demat-cg-complete-modal">
-        <Steps>
-          <Step id="demat-step-1" number="1" mode={currentStep == 1 ? "active" : "disabled"} title={step1Title} />
-          <Step id="demat-step-2" number="2" mode={currentStep == 2 ? "active" : "disabled"} title={step2Title} />
-        </Steps>
-        {currentStep == 1 ? <DematCG docEl={document} onLoad={onDematCGLoad} onFinish={onDematCGFinish} /> : null}
-        {currentStep == 2 ? (
-          <div>
-            <Alert classModifier="success" title={notifMessage}></Alert>
-            {step2Content ? <div className="step-content">{step2Content}</div> : null}
-          </div>
-        ) : null}
-      </div>
-    </CustomModal>
-  );
-};
-
-export default DematCGCompleteModal;
-
-je veux svoir lutulite de ca     application: "spoolnet",
-        numeroContrat: docEl.contractNumber,
-        codeProduit: docEl.codeProduct,
-        dematDoc: docEl.dematDoc, est ce que cest donner dont envoyer a un service ?
+# Ajouter test sur texte "conditions générales remises en papier" ou "CG renvoyées avec succès"
 
