@@ -1,1 +1,25 @@
-Fap4ByK0DKDACqUYY20ZnQpnl4mFjNYzWb0m8jTH6yQt3R6fe3/CMVjUg7uSiP38XyK5+ggagL9qGfe0SfdKZeJnT3BjksX3127NdeZRBpO0iPCvUl1JFgXZ1VD5CLaqAi4LOOWVxoFfF0D/rWX2rRr4X0R/mISwOL2z2DzK9jwKykEOTKGKkxJIcSkb/9AAy2H2vFSiXEWlLxrtRF9cAvb6LnQv8htVITK2Cta+3NI18CBZ2oOLi9HP2rGtHtbDew70IuMQiwshjfV3chmu3oub/UV+UeQd++ge6/DTxZH03U8l8AX9O1j9C4nFCdcAkDUoxNQEyhpe7/C/d0IGw5c9TJQrsBJmbEoho/McxFs=
+    @Override
+    public ResponseEntity<byte[]> show() {
+
+        var userDetail = userService.getUserDetailsCustom();
+        Jwt token = userDetail.getToken();
+
+        Integer id = token.<Integer>getClaim(DOCUMENT_CLAIM);
+
+        if (id == null) {
+            throw new PermissionsDeniedException(
+                String.format(USER_NO_PERMISSION_FORMAT, userDetail.getUser().getUsername(), null));
+        }
+
+        try {
+            byte[] binary = documentServicesManager.documentsService()
+                .getDocumentFile(id.longValue());
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE);
+            httpHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=a.pdf");
+            System.out.println("httpHeaders"+httpHeaders);
+            return ResponseAPI.good(binary, httpHeaders).toResponseEntity();
+        } catch (IOException e) {
+            throw new DocumentNotFoundException("Document " + id + " not found");
+        }
+    }
