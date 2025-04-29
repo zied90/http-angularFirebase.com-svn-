@@ -1,17 +1,1 @@
-
-    /**
-     * Call SearchDocuments from GED to retrieve IDs from corresponding documents
-     */
-    @Override
-    public SearchDocumentsMetadatasResponse searchDocumentsFromGed(String user, String ecmRefDoc,
-                                                                   String... projects) {
-        SearchDocumentsMetadatasResponse SearchDocumentsMetadatasResponse = null;
-        SearchDocumentsMetadatasRequest documentsMetadatasRequest=new SearchDocumentsMetadatasRequest();
-        CommonParameters commonParameters= new CommonParameters();
-        commonParameters.setLocale(CommonParameters.LocaleEnum.FR_FR);
-        commonParameters.endUserType(user);
-        documentsMetadatasRequest.setCommonParameters(commonParameters);
-        documentsMetadatasRequest.setPredicate(Constants.PREDICATE_STRING + "('" + ecmRefDoc + "')");
-        SearchDocumentsMetadatasResponse=  defaultApi.documentMetadatasSearchPost(documentsMetadatasRequest);
-        return SearchDocumentsMetadatasResponse;
-    }
+Message": "Validation failed for argument [0] in public fr.axa.eip.ged.sam.v2.model.SearchDocumentsMetadatasResponse fr.axa.eip.ged.sam.v2.controller.GedSrcController.searchMetaDatas(fr.axa.eip.ged.sam.v2.model.SearchDocumentsMetadatasRequest) with 2 errors: [Field error in object 'searchDocumentsMetadatasRequest' on field 'objectStoreList': rejected value [[]]; codes [Size.searchDocumentsMetadatasRequest.objectStoreList,Size.objectStoreList,Size.java.util.Set,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [searchDocumentsMetadatasRequest.objectStoreList,objectStoreList]; arguments []; default message [objectStoreList],2147483647,1]; default message [size must be between 1 and 2147483647]] [Field error in object 'searchDocumentsMetadatasRequest' on field 'propertiesToReturn': rejected value [[]]; codes [Size.searchDocumentsMetadatasRequest.propertiesToReturn,Size.propertiesToReturn,Size.java.util.Set,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [searchDocumentsMetadatasRequest.propertiesToReturn,propertiesToReturn]; arguments []; default message [propertiesToReturn],2147483647,1]; default message [size must be between 1 and 2147483647]] "
