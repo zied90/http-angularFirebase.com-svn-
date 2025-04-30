@@ -1,55 +1,160 @@
---SuprTxSR2TuKVYdC3Z9mo88DCxJcZzEhcLF1WkkK
-Content-Disposition: form-data; name="file"
-Content-Type: application/octet-stream
-Content-Length: 56194
-
-GIF89a��3f���++3+f+�+�+�UU3UfU�U�U���3�f��������3�f��������3�fՙ������3�f������3333f3�3�3�3+3+33+f3+�3+�3+�3U3U33Uf3U�3U�3U�3�3�33�f3��3��3��3�3�33�f3��3��3��3�3�33�f3ՙ3��3��3�3�33�f3��3��3��ff3fff�f�f�f+f+3f+ff+�f+�f+�fUfU3fUffU�fU�fU�f�f�3f�ff��f��f��f�f�3f�ff��f��f��f�f�3f�ffՙf��f��f�f�3f�ff��f��f����3�f���̙��+�+3�+f�+��+̙+��U�U3�Uf�U��U̙U�����3��f�����̙������3��f�����̙������3��f�ՙ��̙������3��f�����̙����3�f�������+�+3�+f�+��+��+��U�U3�Uf�U��U��U�̀̀3̀f̀�̀�̀�̪̪3̪f̪�̪�̪�����3��f�ՙ����������3��f�����������3�f�������+�+3�+f�+��+��+��U�U3�Uf�U��U��U�����3��f�������������3��f�������������3��f�ՙ����������3��f���������!��,��H����*\Ȱ�Ç#J�H��ŋ3j�ȱ�Ǐ C�I��I�,�M�6MZ6i+[���&˚4g��)��4'�2 �(�F�"Uz4�ҦK�2�*��ӫQ�B�JUk׬`�Z
-�U�ױfɢ-�v�۳p��MK��\�r��}��޻|��
-�0�ÀV,��aƏK��2۴l/1_�l��Μ7�ٳf+�#;F�:�����m�v섶	��[)�ްu����l㵑�.��x��ϗ;�����دk��u���o��\�y���W��x��ᷗ�>��������?����љ4,�����t��	��K+�Uzgay��G\nr�a~��ap!�6�С������/��2�(b�7Ҙ��&�أ�?��C
-Yb�;&��H.�d�P)%�T�X%�LNi�X>�e�Q^���dY�h^�f6k�Y�����ʘ_�)&�u��S{�IU���gU��ǧ�������J^��.
-���>�(��Fj餍v������駤�Z訦Jzꪪ��)����Z鬚Қ魠��+����k���Zꮲ�k�ª�	2�YL����-���i����,��>w!��_�V�.��;��[
-<ƂP���>H��V�C���7�ha�k�>�9���GZ�Ɩ���
->���}�,�Q�rgkZ�p�<��}�Z\Ag0�
-��T��N�˥�Q�`�7�bEKi��c����W܊��ε.\)�W�l���m��3c󎤰5�zWtL׼�?���!;
---SuprTxSR2TuKVYdC3Z9mo88DCxJcZzEhcLF1WkkK
-Content-Disposition: form-data; name="getDocumentContentResponse"
-Content-Type: text/plain;charset=UTF-8
-Content-Length: 71
-
-{"status":"OK","name":"doc10","extension":"gif","mimeType":"image/gif"}
---SuprTxSR2TuKVYdC3Z9mo88DCxJcZzEhcLF1WkkK--
-
-
-Name	Value
-date	Wed, 30 Apr 2025 13:33:11 GMT
-content-type	multipart/form-data;boundary=SuprTxSR2TuKVYdC3Z9mo88DCxJcZzEhcLF1WkkK
-transfer-encoding	chunked
-connection	keep-alive
-expires	0
-vary	Origin,Access-Control-Request-Method,Access-Control-Request-Headers
-axa-client-id	51388898
-x-frame-options	DENY
-pragma	no-cache
-strict-transport-security	max-age=31536000 ; includeSubDomains
-x-content-type-options	nosniff
-x-xss-protection	0
-axa-correlation-id	79d64901-2668-17ab-1624-000009336ec8
-cache-control	no-cache, no-store, max-age=0, must-revalidate
+Unexpected character ('-' (code 45)) in numeric value: expected digit (0-9) to follow minus sign, for valid numeric value
+ at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 2] reading POST https://eip-rec.axa-fr.intraxa/ws/fr-ged-api-documents-v2-vs/document/binary/content
 
 
 
+Method threw 'feign.FeignException' exception.
 
-dit moi le swagger et la response 
+
+   status 200
+
+    public DocumentBinaryContentPost200Response getDocumentGed(String user, List<SearchDocumentsMetadatasResponseDocumentsInner> documents,
+                                                               String... projects) {
+        for (SearchDocumentsMetadatasResponseDocumentsInner document : documents) {
+            GetDocumentContentRequest input = initGetDocumentRequest(user, document.getDocId(),projects);
+               return getDocApi.documentBinaryContentPost(input);
+        }
+
+        return null ;
+    }
 
 
-et voic lap^pel curl --request POST \
-  --url https://eip-rec.axa-fr.intraxa/ws/fr-ged-api-documents-v2-vs/document/binary/content \
-  --header 'authorization: Bearer token test
-  --data '{
-"CommonParameters": {
-"Locale": "fr-fr",
-"EndUserId": "S875170",
-  "ApplicationCaller": "SOLARIS_UAP"
-},
-"DocId": "{59DF1208-BF2C-422C-B7D1-D2D87BA5931D}"
-}'
+/*
+ * GED - GetDocumentContent
+ * No description provided (generated by Openapi Generator https://github.com/openapitools/openapi-generator)
+ *
+ * The version of the OpenAPI document: 1.0
+ * 
+ *
+ * NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech).
+ * https://openapi-generator.tech
+ * Do not edit the class manually.
+ */
+
+
+package fr.axa.pfel.client.model;
+
+import java.util.Objects;
+import java.util.Arrays;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
+import fr.axa.pfel.client.model.GetDocumentContentResponse;
+import java.io.File;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+
+/**
+ * DocumentBinaryContentPost200Response
+ */
+@JsonPropertyOrder({
+  DocumentBinaryContentPost200Response.JSON_PROPERTY_GET_DOCUMENT_CONTENT_RESPONSE,
+  DocumentBinaryContentPost200Response.JSON_PROPERTY_FILE
+})
+@JsonTypeName("_document_binary_content_post_200_response")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2025-04-30T16:41:49.168330900+02:00[Europe/Paris]", comments = "Generator version: 7.9.0")
+public class DocumentBinaryContentPost200Response {
+  public static final String JSON_PROPERTY_GET_DOCUMENT_CONTENT_RESPONSE = "getDocumentContentResponse";
+  private GetDocumentContentResponse getDocumentContentResponse;
+
+  public static final String JSON_PROPERTY_FILE = "file";
+  private feign.form.FormData file;
+
+  public DocumentBinaryContentPost200Response() {
+  }
+
+  public DocumentBinaryContentPost200Response getDocumentContentResponse(GetDocumentContentResponse getDocumentContentResponse) {
+    
+    this.getDocumentContentResponse = getDocumentContentResponse;
+    return this;
+  }
+
+  /**
+   * Get getDocumentContentResponse
+   * @return getDocumentContentResponse
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_GET_DOCUMENT_CONTENT_RESPONSE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public GetDocumentContentResponse getGetDocumentContentResponse() {
+    return getDocumentContentResponse;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_GET_DOCUMENT_CONTENT_RESPONSE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setGetDocumentContentResponse(GetDocumentContentResponse getDocumentContentResponse) {
+    this.getDocumentContentResponse = getDocumentContentResponse;
+  }
+
+
+  public DocumentBinaryContentPost200Response file(feign.form.FormData file) {
+    
+    this.file = file;
+    return this;
+  }
+
+  /**
+   * Get file
+   * @return file
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_FILE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public feign.form.FormData getFile() {
+    return file;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FILE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setFile(feign.form.FormData file) {
+    this.file = file;
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    DocumentBinaryContentPost200Response documentBinaryContentPost200Response = (DocumentBinaryContentPost200Response) o;
+    return Objects.equals(this.getDocumentContentResponse, documentBinaryContentPost200Response.getDocumentContentResponse) &&
+        Objects.equals(this.file, documentBinaryContentPost200Response.file);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getDocumentContentResponse, file);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("class DocumentBinaryContentPost200Response {\n");
+    sb.append("    getDocumentContentResponse: ").append(toIndentedString(getDocumentContentResponse)).append("\n");
+    sb.append("    file: ").append(toIndentedString(file)).append("\n");
+    sb.append("}");
+    return sb.toString();
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(Object o) {
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
+  }
+
+}
+
