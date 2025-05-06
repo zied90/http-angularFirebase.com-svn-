@@ -1,314 +1,97 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
 
-package jakarta.activation;
+org.mockito.exceptions.misusing.UnfinishedStubbingException: 
+Unfinished stubbing detected here:
+-> at fr.axa.pfel.wspfelv3.services.exportdocument.impl.ExportDocumentServiceImplTest.exportDocumentWithUploadGedThrowException(ExportDocumentServiceImplTest.java:107)
+
+E.g. thenReturn() may be missing.
+Examples of correct stubbing:
+    when(mock.isOk()).thenReturn(true);
+    when(mock.isOk()).thenThrow(exception);
+    doThrow(exception).when(mock).someVoidMethod();
+Hints:
+ 1. missing thenReturn()
+ 2. you are trying to stub a final method, which is not supported
+ 3. you are stubbing the behaviour of another mock inside before 'thenReturn' instruction is completed
+
+
+	at fr.axa.pfel.wspfelv3.services.exportdocument.impl.ExportDocumentServiceImpl.exportDocument(ExportDocumentServiceImpl.java:70)
+	at fr.axa.pfel.wspfelv3.services.exportdocument.impl.ExportDocumentServiceImplTest.exportDocumentWithUploadGedThrowException(ExportDocumentServiceImplTest.java:109)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+
+  @Test
+    void exportDocumentWithUploadGedThrowException() throws Exception {
+        final ExportDocument exportDocument = ExportDocumentFactory.getExportDocument("XXXX", true);
+
+        final DocumentLive documentLive = DocumentLiveFactory.getDocumentLive("test", Output.SED);
+        mockExportDocument(documentLive);
+        when(gedService.uploadDocument(any(DocumentMetadata.class), any(UploadDocument.class))).thenThrow( );
+
+        final Attachment attachment = exportDocumentService.exportDocument(exportDocument);
+
+        assertNull(attachment.getGedDocId());
+    }
+
+package fr.axa.pfel.wspfelv3.services.exportdocument;
+
+import fr.axa.pfel.wspfelv3.domain.document.Attachment;
+import fr.axa.pfel.wspfelv3.domain.document.ExportDocument;
+
+public interface ExportDocumentService {
+
+    Attachment exportDocument(ExportDocument exportDocumentDTO) throws Exception;
+}
+
+   @Override
+    public Attachment exportDocument(ExportDocument exportDocument)
+        throws Exception {
+        final DocumentLive documentLiveByIdRequest = documentLiveService.findDocumentLiveByIdRequest(
+            exportDocument.getIdRequest());
+        final fr.axa.pfel.wspfelv3.empower.domain.Attachment attachment = empowerService.exportDocumentByDocIdWithPreserveDoc(
+            documentLiveByIdRequest.getDocIdEmpower());
+        checkMpwSizeLimit(exportDocument, attachment);
+        LOGGER.info("convert export document to pdf {}", exportDocument.getIdRequest());
+        final Attachments attachments = convertLiveDocumentToDocument(
+            documentLiveByIdRequest.getDocument(), attachment);
+
+        Attachment attPdf = attachmentMapper.attEmpowerToDomain(attachments.getAttachmentPDF());
+        if (exportDocument.isUploadGed()) {
+            Attachment attReport = attachmentMapper.attEmpowerToDomain(
+                attachments.getAttachmentReport());
+            LOGGER.info("export document upload pdf {}", exportDocument.getIdRequest());
+            uploadDocumentInGed(exportDocument, documentLiveByIdRequest.getDocument(), attPdf,
+                attReport);
+        }
+
+        return attPdf;
+    }
+
+package fr.axa.pfel.wspfelv3.ged.api;
+
+import fr.axa.pfel.wspfelv3.ged.domain.DocumentMetadata;
+import fr.axa.pfel.wspfelv3.ged.domain.UploadDocument;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.net.URL;
+import javax.xml.stream.XMLStreamException;
 
-public class DataHandler {
-    private DataSource dataSource = null;
-    private DataSource objDataSource = null;
-    private Object object = null;
-    private String objectMimeType = null;
-    private CommandMap currentCommandMap = null;
-    private static final ActivationDataFlavor[] emptyFlavors = new ActivationDataFlavor[0];
-    private ActivationDataFlavor[] transferFlavors;
-    private DataContentHandler dataContentHandler;
-    private DataContentHandler factoryDCH;
-    private static DataContentHandlerFactory factory = null;
-    private DataContentHandlerFactory oldFactory;
-    private String shortType;
-
-    public DataHandler(DataSource ds) {
-        this.transferFlavors = emptyFlavors;
-        this.dataContentHandler = null;
-        this.factoryDCH = null;
-        this.oldFactory = null;
-        this.shortType = null;
-        this.dataSource = ds;
-        this.oldFactory = factory;
-    }
-
-    public DataHandler(Object obj, String mimeType) {
-        this.transferFlavors = emptyFlavors;
-        this.dataContentHandler = null;
-        this.factoryDCH = null;
-        this.oldFactory = null;
-        this.shortType = null;
-        this.object = obj;
-        this.objectMimeType = mimeType;
-        this.oldFactory = factory;
-    }
-
-    public DataHandler(URL url) {
-        this.transferFlavors = emptyFlavors;
-        this.dataContentHandler = null;
-        this.factoryDCH = null;
-        this.oldFactory = null;
-        this.shortType = null;
-        this.dataSource = new URLDataSource(url);
-        this.oldFactory = factory;
-    }
-
-    private synchronized CommandMap getCommandMap() {
-        return this.currentCommandMap != null ? this.currentCommandMap : CommandMap.getDefaultCommandMap();
-    }
-
-    public DataSource getDataSource() {
-        if (this.dataSource == null) {
-            if (this.objDataSource == null) {
-                this.objDataSource = new DataHandlerDataSource(this);
-            }
-
-            return this.objDataSource;
-        } else {
-            return this.dataSource;
-        }
-    }
-
-    public String getName() {
-        return this.dataSource != null ? this.dataSource.getName() : null;
-    }
-
-    public String getContentType() {
-        return this.dataSource != null ? this.dataSource.getContentType() : this.objectMimeType;
-    }
-
-    public InputStream getInputStream() throws IOException {
-        InputStream ins = null;
-        if (this.dataSource != null) {
-            ins = this.dataSource.getInputStream();
-        } else {
-            DataContentHandler dch = this.getDataContentHandler();
-            if (dch == null) {
-                throw new UnsupportedDataTypeException("no DCH for MIME type " + this.getBaseType());
-            }
-
-            if (dch instanceof ObjectDataContentHandler && ((ObjectDataContentHandler)dch).getDCH() == null) {
-                throw new UnsupportedDataTypeException("no object DCH for MIME type " + this.getBaseType());
-            }
-
-            final DataContentHandler fdch = dch;
-            final PipedOutputStream pos = new PipedOutputStream();
-            PipedInputStream pin = new PipedInputStream(pos);
-            (new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        fdch.writeTo(DataHandler.this.object, DataHandler.this.objectMimeType, pos);
-                    } catch (IOException var10) {
-                    } finally {
-                        try {
-                            pos.close();
-                        } catch (IOException var9) {
-                        }
-
-                    }
-
-                }
-            }, "DataHandler.getInputStream")).start();
-            ins = pin;
-        }
-
-        return (InputStream)ins;
-    }
-
-    public void writeTo(OutputStream os) throws IOException {
-        if (this.dataSource != null) {
-            InputStream is = null;
-            byte[] data = new byte[8192];
-            is = this.dataSource.getInputStream();
-
-            int bytes_read;
-            try {
-                while((bytes_read = is.read(data)) > 0) {
-                    os.write(data, 0, bytes_read);
-                }
-            } finally {
-                is.close();
-                is = null;
-            }
-        } else {
-            DataContentHandler dch = this.getDataContentHandler();
-            dch.writeTo(this.object, this.objectMimeType, os);
-        }
-
-    }
-
-    public OutputStream getOutputStream() throws IOException {
-        return this.dataSource != null ? this.dataSource.getOutputStream() : null;
-    }
-
-    public synchronized ActivationDataFlavor[] getTransferDataFlavors() {
-        if (factory != this.oldFactory) {
-            this.transferFlavors = emptyFlavors;
-        }
-
-        if (this.transferFlavors == emptyFlavors) {
-            this.transferFlavors = this.getDataContentHandler().getTransferDataFlavors();
-        }
-
-        return this.transferFlavors == emptyFlavors ? this.transferFlavors : (ActivationDataFlavor[])this.transferFlavors.clone();
-    }
-
-    public boolean isDataFlavorSupported(ActivationDataFlavor flavor) {
-        ActivationDataFlavor[] lFlavors = this.getTransferDataFlavors();
-
-        for(int i = 0; i < lFlavors.length; ++i) {
-            if (lFlavors[i].equals(flavor)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public Object getTransferData(ActivationDataFlavor flavor) throws IOException {
-        return this.getDataContentHandler().getTransferData(flavor, this.dataSource);
-    }
-
-    public synchronized void setCommandMap(CommandMap commandMap) {
-        if (commandMap != this.currentCommandMap || commandMap == null) {
-            this.transferFlavors = emptyFlavors;
-            this.dataContentHandler = null;
-            this.currentCommandMap = commandMap;
-        }
-
-    }
-
-    public CommandInfo[] getPreferredCommands() {
-        return this.dataSource != null ? this.getCommandMap().getPreferredCommands(this.getBaseType(), this.dataSource) : this.getCommandMap().getPreferredCommands(this.getBaseType());
-    }
-
-    public CommandInfo[] getAllCommands() {
-        return this.dataSource != null ? this.getCommandMap().getAllCommands(this.getBaseType(), this.dataSource) : this.getCommandMap().getAllCommands(this.getBaseType());
-    }
-
-    public CommandInfo getCommand(String cmdName) {
-        return this.dataSource != null ? this.getCommandMap().getCommand(this.getBaseType(), cmdName, this.dataSource) : this.getCommandMap().getCommand(this.getBaseType(), cmdName);
-    }
-
-    public Object getContent() throws IOException {
-        return this.object != null ? this.object : this.getDataContentHandler().getContent(this.getDataSource());
-    }
-
-    public Object getBean(CommandInfo cmdinfo) {
-        Object bean = null;
-
-        try {
-            ClassLoader cld = null;
-            cld = SecuritySupport.getContextClassLoader();
-            if (cld == null) {
-                cld = this.getClass().getClassLoader();
-            }
-
-            bean = cmdinfo.getCommandObject(this, cld);
-        } catch (IOException var4) {
-        } catch (ClassNotFoundException var5) {
-        }
-
-        return bean;
-    }
-
-    private synchronized DataContentHandler getDataContentHandler() {
-        if (factory != this.oldFactory) {
-            this.oldFactory = factory;
-            this.factoryDCH = null;
-            this.dataContentHandler = null;
-            this.transferFlavors = emptyFlavors;
-        }
-
-        if (this.dataContentHandler != null) {
-            return this.dataContentHandler;
-        } else {
-            String simpleMT = this.getBaseType();
-            if (this.factoryDCH == null && factory != null) {
-                this.factoryDCH = factory.createDataContentHandler(simpleMT);
-            }
-
-            if (this.factoryDCH != null) {
-                this.dataContentHandler = this.factoryDCH;
-            }
-
-            if (this.dataContentHandler == null) {
-                if (this.dataSource != null) {
-                    this.dataContentHandler = this.getCommandMap().createDataContentHandler(simpleMT, this.dataSource);
-                } else {
-                    this.dataContentHandler = this.getCommandMap().createDataContentHandler(simpleMT);
-                }
-            }
-
-            if (this.dataSource != null) {
-                this.dataContentHandler = new DataSourceDataContentHandler(this.dataContentHandler, this.dataSource);
-            } else {
-                this.dataContentHandler = new ObjectDataContentHandler(this.dataContentHandler, this.object, this.objectMimeType);
-            }
-
-            return this.dataContentHandler;
-        }
-    }
-
-    private synchronized String getBaseType() {
-        if (this.shortType == null) {
-            String ct = this.getContentType();
-
-            try {
-                MimeType mt = new MimeType(ct);
-                this.shortType = mt.getBaseType();
-            } catch (MimeTypeParseException var3) {
-                this.shortType = ct;
-            }
-        }
-
-        return this.shortType;
-    }
-
-    public static synchronized void setDataContentHandlerFactory(DataContentHandlerFactory newFactory) {
-        if (factory != null) {
-            throw new Error("DataContentHandlerFactory already defined");
-        } else {
-            SecurityManager security = System.getSecurityManager();
-            if (security != null) {
-                try {
-                    security.checkSetFactory();
-                } catch (SecurityException var3) {
-                    SecurityException ex = var3;
-                    if (DataHandler.class.getClassLoader() != newFactory.getClass().getClassLoader()) {
-                        throw ex;
-                    }
-                }
-            }
-
-            factory = newFactory;
-        }
-    }
-}
-package fr.axa.pfel.wspfelv3.empower.domain;
-
-import jakarta.activation.DataHandler;
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-public class Attachment {
-
-    private String fileName;
-    private String docId;
-    private DataHandler binaryData;
-
+public interface GedUploadService {
+    String uploadDocument(DocumentMetadata documentMetadata, UploadDocument document)
+        throws XMLStreamException, IOException;
 
 }
 
- final fr.axa.pfel.wspfelv3.empower.domain.Attachment attachment = empowerService.exportDocumentByDocIdWithPreserveDoc(
-            documentLiveByIdRequest.getDocIdEmpower());
+  @Override
+   public String uploadDocument(DocumentMetadata documentMetadata, UploadDocument document) throws XMLStreamException, IOException {
+
+       UploadRequest uploadRequest=buildUpload(documentMetadata,document);
+        String filename=document.getFilename()!=null?document.getFilename():UUID.randomUUID().toString();
+        FormData formData = new FormData("application/pdf", filename, document.getBinaryData());
+        UploadDocumentResponse response =uploadApi.documentUploadPost(
+                uploadRequest, formData);
+        return response.getDocId();
 
 
-je ne pas  acces exportDocumentByDocIdWithPreserveDoc et je veux que ntu me remli ca endur attachment pour tester autre traitement
+    }  je met quoi pour le test matcrhe
 
