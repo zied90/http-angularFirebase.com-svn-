@@ -1,15 +1,16 @@
 curl --request POST \
   --url https://eip-rec.axa-fr.intraxa/ws/fr-ged-api-documents-v2-vs/document/upload \
-  --header 'authorization: Bearer dGAiegIzez5crOIrSb6ViutunydNhTI8ubgmtWkwTzcm48sHAm4xY_ubt7ujNoNiIJvkkVvusdBEFk6ONRc6P7-An0HwC-dI42TnwzFGN2XaKU4pszQ3KbmUoewRyo1sy93prUpA1A2uVZ7KQJg7Lr_9UbXQivp-ijl56Gb8n_peA4ONd2MR5Tlj2EM428nTg_aNsGMTU2SeLSQw64LVP6YHVFVcd5Hji8Yf-HpSirA2K3LeVZd2r1S2yESjtNtSTjbvW7o0_Dt1po8Asj0ZCflulELBTiMFjZsmXhHVHptSTcq87IO8BlVOsQoz4714Zd424rSnThdJlk8Mb1gJA' \
+  --header 'authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Imlrbml0RUVIMHNTa0c3SGF2WlVPN18tUmJPMF9SUzI1NiIsInBpLmF0bSI6IjRldG4ifQ.eyJzY29wZSI6InVybjpheGE6ZnJhbmNlOmdlZDpjc3QgdXJuOmF4YTpmcmFuY2U6Z2VkOnNyYyB1cm46YXhhOmZyYW5jZTpnZWQ6bW5nIiwiYXV0aG9yaXphdGlvbl9kZXRhaWxzIjpbXSwiY2xpZW50X2lkIjoiNTEzODg4OTgiLCJpc3MiOiJodHRwczovL29uZWxvZ2luLmRldi5heGEuY29tIiwianRpIjoiNlg3WXNUb0RhTGJrblk3SjI0OGNPU0wwQVhJNXBmZ0EiLCJleHAiOjE3NDY2MjgzNjIsImlhdCI6MTc0NjYyNDc2Mn0.WBqAiegIzez5crOIrSb6ViutunydNhTI8ubgmtWkwTzcm48sHAm4xY_ubt7ujNoNiIJvkkVvusdBEFk6ONRc6P7-An0HwC-dI42TnwzFGN2XaKU4pszQ3KbmUoewRyo1sy93prUpA1A2uVZ7KQJg7Lr_9UbXQivp-ijl56Gb8n_peA4ONd2MR5Tlj2EM428nTg_aNsGMTU2SeLSQw64LVP6YHVFVcd5Hji8Yf-HpSirA2K3LeVZd2r1S2yESjtNtSTjbvW7o0_Dt1po8Asj0ZCflulELBTiMFjZsmXhHVHptSTcq87IO8BlVOsQoz4714Zd424rSnThdJlk8Mb1gJA' \
   --header 'content-type: multipart/form-data' \
   --form 'UploadRequest={
     "Interaction": "sync",
     "CommonParameters": {
         "Locale": "fr-fr",
-        "ApplicationCaller": "FRONTEADAPTALIA"
+        "ApplicationCaller": "FRONTEADAPTALIA",
+		"EndUserId": "S875170"
     },
     "DocumentProperties": {
-        "Name": "Document d'\''information sur le produit d'\''assurance",
+        "Name": "doc",
         "Extension": ".pdf",
         "Properties": [
             {
@@ -159,4 +160,4 @@ curl --request POST \
         ]
     }
 }' \
-  --form 'Content=@C:\Users\B609EN\Downloads\Document d'\''information sur le produit d'\''assurance.pdf'
+  --form 'Content=@C:\Users\B609EN\Downloads\doc.pdf'
