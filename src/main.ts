@@ -1,52 +1,411 @@
---2fJqj9XFLVTPJVyWjTP8hfCsGVhJLHlQ2h
-Content-Disposition: form-data; name="file"
-Content-Type: application/octet-stream
-Content-Length: 56194
+    public DocumentBinaryContentPost200Response getDocumentGed(String user, List<SearchDocumentsMetadatasResponseDocumentsInner> documents,
+                                                               String... projects) {
+        DocumentBinaryContentPost200Response response=new DocumentBinaryContentPost200Response();
+        
+        for (SearchDocumentsMetadatasResponseDocumentsInner document : documents) {
+            GetDocumentContentRequest input = initGetDocumentRequest(user, document.getDocId(),projects);
+               return getDocApi.documentBinaryContentPost(input);
+        }
 
-GIF89a��3f���++3+f+�+�+�UU3UfU�U�U���3�f��������3�f��������3�fՙ������3�f������3333f3�3�3�3+3+33+f3+�3+�3+�3U3U33Uf3U�3U�3U�3�3�33�f3��3��3��3�3�33�f3��3��3��3�3�33�f3ՙ3��3��3�3�33�f3��3��3��ff3fff�f�f�f+f+3f+ff+�f+�f+�fUfU3fUffU�fU�fU�f�f�3f�ff��f��f��f�f�3f�ff��f��f��f�f�3f�ffՙf��f��f�f�3f�ff��f��f����3�f���̙��+�+3�+f�+��+̙+��U�U3�Uf�U��U̙U�����3��f�����̙������3��f�����̙������3��f�ՙ��̙������3��f�����̙����3�f�������+�+3�+f�+��+��+��U�U3�Uf�U��U��U�̀̀3̀f̀�̀�̀�̪̪3̪f̪�̪�̪�����3��f�ՙ����������3��f�����������3�f�������+�+3�+f�+��+��+��U�U3�Uf�U��U��U�����3��f�������������3��f�������������3��f�ՙ����������3��f���������!��,��H����*\Ȱ�Ç#J�H��ŋ3j�ȱ�Ǐ C�I��I�,�M�6MZ6i+[���&˚4g��)��4'�2 �(�F�"Uz4�ҦK�2�*��ӫQ�B�JUk׬`�Z
-�U�ױfɢ-�v�۳p��MK��\�r��}��޻|��
-�0�ÀV,��aƏK��2۴l/1_�l��Μ7�ٳf+�#;F�:�����m�v섶	��[)�ްu����l㵑�.��x��ϗ;�����دk��u���o��\�y���W��x��ᷗ�>��������?����љ4,�����t��	��K+�Uzgay��G\nr�a~��ap!�6�С������/��2�(b�7Ҙ��&�أ�?��C
-Yb�;&��H.�d�P)%�T�X%�LNi�X>�e�Q^���dY�h^�f6k�Y�����ʘ_�)&�u��S{�IU���gU��ǧ�������J^��.
-���>�(��Fj餍v������駤�Z訦Jzꪪ��)����Z鬚Қ魠��+����k���Zꮲ�k�ª�	2�YL����-���i����,��>w!��_�V�.��;��[���ћ��궻.���������
-\0���0��G�O�M���J�l�K�m3\��Iq|[�Xm*2�H����¡�|*����+�,��1���/��s�'�̳�@�L��>�t�4����H�t�FOm��XW�u�P_���\+�5�b�M6�6�
-6c��1�Mq��]�u]��t�a�����/x�߫0�\x���x��.y�+�8�[���C�y�o�9�G	Hq���-w��n�4�@��졓ޤmh�{�f�Nu߿���^_����7��/�7������3}��[O}��K���ڇ���Yaf�g^���ֶ�:���>���[�n�#�鶌z'?}��(����A ��:P
-���'�
-R������2��
-z� $�-��0�4�S(B���|�	c�A���3� o��,��Zosg�$�63i�U6da�8B&�'Q+�aq8E���W�"
-�xC.21�I�"�(�-��f$#�xF/���jt����*��q��������utV��Vċ�Avṿ"��"��Ly2ҝ$�%;UO��R&���0]����d$5�IR����D�'O�JK���e*_	JW���t�@�:j�mu~\��0;S��$Gv("ӔϜe4W9MYR��L�6��MnnS���7�9Nk�S��e:s)No������@7Ա��uSߙ�g
->IП�<�*��"$ى�s�����Ѕ&���hC'ڱ�U���D3�P�B����hH?�Qu�fY��M��A��uGLxJ
-�����?�"���P
-*O��'�u�H-jR��Ԧ2��;ujT�*өZ��X��U��U�z�F\
-�W{
+        return null ;
+    }
 
 
-5�����ɲ㱆�P踚��O�̗�+ʨY�	�6��@�6xJ²tN�0�4<�UC>�CĲJ3���K�[J�dB�!g�*R
-���C�<�����R�6�˰���r����y���Ek���L���N�A��4�LA��U;Һ++S;��!!��{<���
-]�CEJ1���iI��8�^�U�|s0��UA��Ɋ�	L5]Ÿ���,0/��|�&�$��O������YLe�MR���1l�B��-�O��o�DQ��|Y�zD�Gݴ�J�tAg��T���Iu�<��2��у�;[���j�{X�����LN2�4��<�\�l�2/�@vr���du����K�MHI�|���
-LFU��C+�dH
-� +<��'=;�V�A��GՌ�M<�VU�(�!�kR�l��BάR�#1�u����2��J�x�[ԍ�/ۺ��JSe��E�IU��K7f�9
-R���}����quC�,��@���.1�sZ�t�b*�3,���>�\+H�����C���9��չ�mJ?c��\���X(ܛ�2�'����D<���9L�G�%�oM�w�Ь�̵�M��G%C�?��H�ɗ"̞{���T*�D���ZZ9\lm]Ղ�o4�7�F,�4���a{H6���U�=�	DGr
-P)��|=4��[5�5&���=��:ʗ�IJ�-�_����jQ�۠���֤�N�:��tS�˨��Bc^�ӉePV�&v�bPbX��a�����D��O���Z5_f�Bo���ЄeP�$�aV�%�a��'�a�aV��a,�a��X���V�+�b1�b-&�,�c3V�4㌄Nib4.c6��:��;������^�R��ۻ�%�6�MGJS)�a1v�F��0��G��J��K��(c?c$NaH�VZ�F_�ê�_C��˲O�r�&�\�%�CW��Y-;���Ǘ��Q&a��G:
-��%�bC5
-^2�e^G6��.��L�Ok���8Xff�X�%9�+���Z�-@K3��V�:���uv�{4a!e�>�S����1-�R$�iX˜��d�n_�>�Ӈ�H��Q�^�s��S%E�3�ZU7��}����[4���+��w�eyLU��P����2�ϋ�l���Ӷx�Zd3���"]ʒ������>�-9�f�uR���չ�b����}�
->j�E`�
-1~�9��+t��i�"܋��n�fi�RڍFkn���L�/%@�m�Ɲш.^���j&����ȅݾ�h/�􋿉�Y�R��A�g���w��qڰ��)۹Z췝V�ݼ�n�L�ܶ�k�V�0�je�%^nn8��_.�]}��U�d%
-N�����6�hnsKuD����u�;���v��%�Y[�ˢ��+i�Z�]."X�-d�뽻E��N:^D�yD�Q�ݜ5Ǩ�i�C#������L�Wf/�b6o��.Z�#�?ͤ���#u�X~2�&U�6ӥke�� �N_\�"q�J>f�Z�F��\j�\]�m�J,ۡ:L(}n��9gvBr�g�i`�ul�B���7/
-Y>UD*��Č&kj@�_��i��p�>_~�i�И*k��j"�T�Ĳ���m��j��z\6�&�R� <��M$�gD�wS��5��D���Ĵ��n��S���oe�����7�AԍC�f��SڇFT:8	�M�Fo�=%�c%�4�oRΝqz٘6录�.&��+]�T�=3�$_+���"�q���i�s�t�r��D���^���E+g��O�L����rgN��*�9�.ukn��/�&>�ʿ��m��F��ir����
-�R6QVo]1j��6F���S��>��B�'��[&�����?��&�#Kh��F���;n��@{O4��e�DO�T��S�f�!��]�����s/��>ѝ�=��a6���JM�������x-�^i�
-Y��2�}tl/�uH�S0L���Z���WW�4C����S�p�_8�=''m�Mw����D��^ˎ떆�����]Ͽ�r/CߞS�ًNxlz�W�ּ��O8x�nK�q��UQ�g0�Xwv�<���vվ_�sk#ͬ�Y[���H�?�fǫ3���s�Ņ���#Д6�|SL|�r�w
-�ٮY$�ȹ�{f�UE˫<B��t!��8�i9�,np2=kɏE��g��hMX��ӕ�<�x�^ںv����|{�'��~�~(�}Ao)V䰏���-{�~������=�o���!oz
-�q���bn�$h����,谠F$Xq!E�1nd�С->$���E�M�\	R�H�/I����̓[޴��%M�G��钨G�*qj��eN�O?2L�t)F�F�rl�&V�b�N�u�W�E+�yV��Z�n��*h٬c����oX�>�z�k��K���N-��nG�s{�t;9f_���b&lw'ԫ���=|�rh���ժ�`ƙaw6m⽓UG-m��X�2��N�uNŊskF}��l�fu/U�7�ߪ���;-���_:��`�˧B��7��)�Jڶz��.���>b�E��g��FZ|�eG]p�m��q���Z>t�uX�gچ��nw��?�X�j?1��Q�g���uX]ґh��%��1��Y=v��nwW����W�g鱦�RIn��z�ɘ!��^d��X�x��(]gF�ם��qi��A�� _>��܈s�h�l:��"�k��"�PRz�U(�ubY�}/>X�|u
-���	�v�5�d��!��F
-)���!Gd�J^'��N9*�On	����:����*��	���vj���� �R�kdV�dku>�(�	��s��m�Wv[��}Ҋ��;R�۫��[��!瓹3V�״^*�)��cr@/�̂���>�롽��x�Jj*����:�%�B��ތ�z�����q�ɨ�zZJo��G׊�~X d���0��iU*����s����o����9n�{~뱃�y\3�O�:o��	b wu�CF��oN���/�-��MR�+Ǝn,j�v�z��*��ֶR㽨�˘����^�WK�+�е[���O�l��	�q��~��q�{8�35Ƹ�Ԟ���5y�,�Y�����W&�#��q�Bw=���{c�h[
-���[	y���*£s���t�Z��-r�����{�=7�8Ʈ�ƞa]�b�k�ٰ��a��j���1���ݺ}����3�$w%ۙ
-<ƂP���>H��V�C���7�ha�k�>�9���GZ�Ɩ���
->���}�,�Q�rgkZ�p�<��}�Z\Ag0�
-��T��N�˥�Q�`�7�bEKi��c����W܊��ε.\)�W�l���m��3c󎤰5�zWtL׼�?���!;
---2fJqj9XFLVTPJVyWjTP8hfCsGVhJLHlQ2h
-Content-Disposition: form-data; name="getDocumentContentResponse"
-Content-Type: text/plain;charset=UTF-8
-Content-Length: 71
+/*
+ * GED - GetDocumentContent
+ * No description provided (generated by Openapi Generator https://github.com/openapitools/openapi-generator)
+ *
+ * The version of the OpenAPI document: 1.0
+ * 
+ *
+ * NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech).
+ * https://openapi-generator.tech
+ * Do not edit the class manually.
+ */
 
-{"status":"OK","name":"doc10","extension":"gif","mimeType":"image/gif"}
---2fJqj9XFLVTPJVyWjTP8hfCsGVhJLHlQ2h--
+
+package fr.axa.pfel.client.model;
+
+import java.util.Objects;
+import java.util.Arrays;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
+import fr.axa.pfel.client.model.GetDocumentContentResponse;
+import java.io.File;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+
+/**
+ * DocumentBinaryContentPost200Response
+ */
+@JsonPropertyOrder({
+  DocumentBinaryContentPost200Response.JSON_PROPERTY_GET_DOCUMENT_CONTENT_RESPONSE,
+  DocumentBinaryContentPost200Response.JSON_PROPERTY_FILE
+})
+@JsonTypeName("_document_binary_content_post_200_response")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2025-05-06T17:03:44.921988900+02:00[Europe/Paris]", comments = "Generator version: 7.9.0")
+public class DocumentBinaryContentPost200Response {
+  public static final String JSON_PROPERTY_GET_DOCUMENT_CONTENT_RESPONSE = "getDocumentContentResponse";
+  private GetDocumentContentResponse getDocumentContentResponse;
+
+  public static final String JSON_PROPERTY_FILE = "file";
+  private feign.form.FormData file;
+
+  public DocumentBinaryContentPost200Response() {
+  }
+
+  public DocumentBinaryContentPost200Response getDocumentContentResponse(GetDocumentContentResponse getDocumentContentResponse) {
+    
+    this.getDocumentContentResponse = getDocumentContentResponse;
+    return this;
+  }
+
+  /**
+   * Get getDocumentContentResponse
+   * @return getDocumentContentResponse
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_GET_DOCUMENT_CONTENT_RESPONSE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public GetDocumentContentResponse getGetDocumentContentResponse() {
+    return getDocumentContentResponse;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_GET_DOCUMENT_CONTENT_RESPONSE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setGetDocumentContentResponse(GetDocumentContentResponse getDocumentContentResponse) {
+    this.getDocumentContentResponse = getDocumentContentResponse;
+  }
+
+
+  public DocumentBinaryContentPost200Response file(feign.form.FormData file) {
+    
+    this.file = file;
+    return this;
+  }
+
+  /**
+   * Get file
+   * @return file
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_FILE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public feign.form.FormData getFile() {
+    return file;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FILE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setFile(feign.form.FormData file) {
+    this.file = file;
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    DocumentBinaryContentPost200Response documentBinaryContentPost200Response = (DocumentBinaryContentPost200Response) o;
+    return Objects.equals(this.getDocumentContentResponse, documentBinaryContentPost200Response.getDocumentContentResponse) &&
+        Objects.equals(this.file, documentBinaryContentPost200Response.file);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getDocumentContentResponse, file);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("class DocumentBinaryContentPost200Response {\n");
+    sb.append("    getDocumentContentResponse: ").append(toIndentedString(getDocumentContentResponse)).append("\n");
+    sb.append("    file: ").append(toIndentedString(file)).append("\n");
+    sb.append("}");
+    return sb.toString();
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(Object o) {
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
+  }
+
+}
+
+/*
+ * GED - GetDocumentContent
+ * No description provided (generated by Openapi Generator https://github.com/openapitools/openapi-generator)
+ *
+ * The version of the OpenAPI document: 1.0
+ * 
+ *
+ * NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech).
+ * https://openapi-generator.tech
+ * Do not edit the class manually.
+ */
+
+
+package fr.axa.pfel.client.model;
+
+import java.util.Objects;
+import java.util.Arrays;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+
+/**
+ * GetDocumentContentResponse
+ */
+@JsonPropertyOrder({
+  GetDocumentContentResponse.JSON_PROPERTY_STATUS,
+  GetDocumentContentResponse.JSON_PROPERTY_NAME,
+  GetDocumentContentResponse.JSON_PROPERTY_EXTENSION,
+  GetDocumentContentResponse.JSON_PROPERTY_MIME_TYPE
+})
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2025-05-06T17:03:44.921988900+02:00[Europe/Paris]", comments = "Generator version: 7.9.0")
+public class GetDocumentContentResponse {
+  public static final String JSON_PROPERTY_STATUS = "Status";
+  private String status;
+
+  public static final String JSON_PROPERTY_NAME = "Name";
+  private String name;
+
+  public static final String JSON_PROPERTY_EXTENSION = "Extension";
+  private String extension;
+
+  public static final String JSON_PROPERTY_MIME_TYPE = "MimeType";
+  private String mimeType;
+
+  public GetDocumentContentResponse() {
+  }
+
+  public GetDocumentContentResponse status(String status) {
+    
+    this.status = status;
+    return this;
+  }
+
+  /**
+   * Get status
+   * @return status
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_STATUS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getStatus() {
+    return status;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_STATUS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
+
+  public GetDocumentContentResponse name(String name) {
+    
+    this.name = name;
+    return this;
+  }
+
+  /**
+   * Get name
+   * @return name
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getName() {
+    return name;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setName(String name) {
+    this.name = name;
+  }
+
+
+  public GetDocumentContentResponse extension(String extension) {
+    
+    this.extension = extension;
+    return this;
+  }
+
+  /**
+   * Get extension
+   * @return extension
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_EXTENSION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getExtension() {
+    return extension;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_EXTENSION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setExtension(String extension) {
+    this.extension = extension;
+  }
+
+
+  public GetDocumentContentResponse mimeType(String mimeType) {
+    
+    this.mimeType = mimeType;
+    return this;
+  }
+
+  /**
+   * Get mimeType
+   * @return mimeType
+   */
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MIME_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getMimeType() {
+    return mimeType;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MIME_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMimeType(String mimeType) {
+    this.mimeType = mimeType;
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    GetDocumentContentResponse getDocumentContentResponse = (GetDocumentContentResponse) o;
+    return Objects.equals(this.status, getDocumentContentResponse.status) &&
+        Objects.equals(this.name, getDocumentContentResponse.name) &&
+        Objects.equals(this.extension, getDocumentContentResponse.extension) &&
+        Objects.equals(this.mimeType, getDocumentContentResponse.mimeType);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(status, name, extension, mimeType);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("class GetDocumentContentResponse {\n");
+    sb.append("    status: ").append(toIndentedString(status)).append("\n");
+    sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    extension: ").append(toIndentedString(extension)).append("\n");
+    sb.append("    mimeType: ").append(toIndentedString(mimeType)).append("\n");
+    sb.append("}");
+    return sb.toString();
+  }
+
+  /**
+   * Convert the given object to string with each line indented by 4 spaces
+   * (except the first line).
+   */
+  private String toIndentedString(Object o) {
+    if (o == null) {
+      return "null";
+    }
+    return o.toString().replace("\n", "\n    ");
+  }
+
+}
+package fr.axa.pfel.client.impl;
+
+import fr.axa.honey.client.rest.feign.ApiClient;
+import fr.axa.honey.client.rest.feign.EncodingUtils;
+import fr.axa.pfel.client.model.ApiResponse;
+
+import fr.axa.pfel.client.model.BusinessError;
+import fr.axa.pfel.client.model.DocumentBinaryContentPost200Response;
+import fr.axa.pfel.client.model.GetDocumentContentRequest;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import feign.*;
+
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2025-05-06T17:03:44.921988900+02:00[Europe/Paris]", comments = "Generator version: 7.9.0")
+public interface GetDocumentApi extends ApiClient.Api {
+
+
+  /**
+   * GetDocumentContent / multi part response
+   * 
+   * @param getDocumentContentRequest GetDocumentContent Request (required)
+   * @return DocumentBinaryContentPost200Response
+   */
+  @RequestLine("POST /document/binary/content")
+  @Headers({
+    "Content-Type: application/json",
+    "Accept: application/json,multipart/form-data",
+  })
+  DocumentBinaryContentPost200Response documentBinaryContentPost(GetDocumentContentRequest getDocumentContentRequest);
+
+  /**
+   * GetDocumentContent / multi part response
+   * Similar to <code>documentBinaryContentPost</code> but it also returns the http response headers .
+   * 
+   * @param getDocumentContentRequest GetDocumentContent Request (required)
+   * @return A ApiResponse that wraps the response boyd and the http headers.
+   */
+  @RequestLine("POST /document/binary/content")
+  @Headers({
+    "Content-Type: application/json",
+    "Accept: application/json,multipart/form-data",
+  })
+  ApiResponse<DocumentBinaryContentPost200Response> documentBinaryContentPostWithHttpInfo(GetDocumentContentRequest getDocumentContentRequest);
+
+
+}
+    }
+    @Bean
+    public GetDocumentApi frGetApiDocumentsV2Vs(RestClientBuilderFactory restClientBuilderFactory){
+        return restClientBuilderFactory
+                .configureFromEnvironment(GED_REST_SERVICE)
+                //.withInterceptors(template->template.header("Accept", ""))
+                //.withCodec(new Encoder.Default(), new Decoder.Default())
+                .createClient(GetDocumentApi.class);
+    }
+Unexpected character ('-' (code 45)) in numeric value: expected digit (0-9) to follow minus sign, for valid numeric value
+at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 2] reading POST https://eip-rec.axa-fr.intraxa/ws/fr-ged-api-documents-v2-vs/document/binary/content
