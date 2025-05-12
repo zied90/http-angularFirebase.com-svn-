@@ -1,9 +1,13 @@
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2025-05-12T17:55:56.612+0200;WIN-73NS0MRGEO4;main;;ERROR;;;;;;f.a.p.w.s.o.i.SearchAndConcatServiceImpl
+        - [ConcatUapService : concatFileToSend] : [DOC : null]Extension pdf unsupported !!!!; 
 
-java.lang.NullPointerException: Cannot invoke "fr.axa.pfel.client.model.GetDocumentContentResponse.getExtension()" because the return value of "fr.axa.pfel.client.model.DocumentBinaryContentPost200Response.getGetDocumentContentResponse()" is null
-
-	at fr.axa.pfel.wspfelv3.services.orchestration.impl.SearchAndConcatServiceImpl.convertDocument(SearchAndConcatServiceImpl.java:209)
-	at fr.axa.pfel.wspfelv3.services.orchestration.impl.SearchAndConcatServiceImpl.executeSearchAndConvertDocument(SearchAndConcatServiceImpl.java:193)
-	at fr.axa.pfel.wspfelv3.services.orchestration.impl.SearchAndConcatServiceImplTest.testExecuteSearchAndConvertDocumentSuccess(SearchAndConcatServiceImplTest.java:142)
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertNotNull(Assert.java:713)
+	at org.junit.Assert.assertNotNull(Assert.java:723)
+	at fr.axa.pfel.wspfelv3.services.orchestration.impl.SearchAndConcatServiceImplTest.testExecuteSearchAndConvertDocumentSuccess(SearchAndConcatServiceImplTest.java:127)
 	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
 	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
@@ -29,4 +33,3 @@ java.lang.NullPointerException: Cannot invoke "fr.axa.pfel.client.model.GetDocum
 	at com.intellij.rt.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:35)
 	at com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:232)
 	at com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:55)
-
