@@ -1,74 +1,20 @@
-package fr.axa.pfel.wspfelv3.ged.impl.configuration;
 
-import com.fasterxml.jackson.databind.MapperFeature;
-import feign.Response;
-import feign.codec.Decoder;
-import feign.FeignException;
-import fr.axa.pfel.client.model.DocumentBinaryContentPost200Response;
-import fr.axa.pfel.client.model.GetDocumentContentResponse;
-import org.apache.commons.fileupload.MultipartStream;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.*;
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
-import java.util.Set;
-public class MultipartResponseDecoder implements Decoder {
-    private final Decoder defaultDecoder;
-    private final ObjectMapper objectMapper;
-    public MultipartResponseDecoder(Decoder defaultDecoder) {
-        this.defaultDecoder = defaultDecoder;
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
-    }
-    @Override
-    public Object decode(Response response, Type type) throws IOException, FeignException {
-        String contentType = response.headers().getOrDefault("Content-Type", Set.of())
-                .stream().findFirst().orElse("");
-        if (!contentType.contains("multipart/form-data")) {
-            return defaultDecoder.decode(response, type);
-        }
-        String boundary = extractBoundary(contentType);
-        if (boundary == null) {
-            throw new IOException("Impossible de trouver la boundary dans Content-Type");
-        }
-        InputStream input = response.body().asInputStream();
-        MultipartStream multipartStream = new MultipartStream(input, boundary.getBytes(StandardCharsets.UTF_8), 4096, null);
-        boolean nextPart = multipartStream.skipPreamble();
-        ByteArrayOutputStream fileContent = null;
-        String jsonPart = null;
-        while (nextPart) {
-            String headers = multipartStream.readHeaders();
-            if (headers.contains("name=\"file\"")) {
-                fileContent = new ByteArrayOutputStream();
-                multipartStream.readBodyData(fileContent);
-            } else if (headers.contains("name=\"getDocumentContentResponse\"")) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                multipartStream.readBodyData(baos);
-                jsonPart = baos.toString(StandardCharsets.UTF_8);
-            }
-            nextPart = multipartStream.readBoundary();
-        }
-        DocumentBinaryContentPost200Response result = new DocumentBinaryContentPost200Response();
-        if (jsonPart != null) {
-            GetDocumentContentResponse contentResponse = objectMapper.readValue(jsonPart, GetDocumentContentResponse.class);
-            result.setGetDocumentContentResponse(contentResponse);
-        }
-        if (fileContent != null) {
-            feign.form.FormData file = new feign.form.FormData();
-            file.setData(fileContent.toByteArray());
-            file.setFileName("document"); // ou récupéré dynamiquement depuis les headers
-            file.setContentType("application/octet-stream"); // ou extraire des headers aussi
-            result.setFile(file);
-        }
-        return result;
-    }
-    private String extractBoundary(String contentType) {
-        for (String param : contentType.split(";")) {
-            String trimmed = param.trim();
-            if (trimmed.startsWith("boundary=")) {
-                return trimmed.substring("boundary=".length());
-            }
-        }
-        return null;
-    }
-} donne le test unitare de ca
+com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException: Unrecognized field "documentName" (class fr.axa.pfel.client.model.GetDocumentContentResponse), not marked as ignorable (4 known properties: "Status", "Name", "MimeType", "Extension"])
+ at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 18] (through reference chain: fr.axa.pfel.client.model.GetDocumentContentResponse["documentName"])
+
+	at com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException.from(UnrecognizedPropertyException.java:61)
+	at com.fasterxml.jackson.databind.DeserializationContext.handleUnknownProperty(DeserializationContext.java:1153)
+	at com.fasterxml.jackson.databind.deser.std.StdDeserializer.handleUnknownProperty(StdDeserializer.java:2241)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializerBase.handleUnknownProperty(BeanDeserializerBase.java:1793)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializerBase.handleUnknownVanilla(BeanDeserializerBase.java:1771)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.vanillaDeserialize(BeanDeserializer.java:316)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:177)
+	at com.fasterxml.jackson.databind.deser.DefaultDeserializationContext.readRootValue(DefaultDeserializationContext.java:342)
+	at com.fasterxml.jackson.databind.ObjectMapper._readMapAndClose(ObjectMapper.java:4905)
+	at com.fasterxml.jackson.databind.ObjectMapper.readValue(ObjectMapper.java:3848)
+	at com.fasterxml.jackson.databind.ObjectMapper.readValue(ObjectMapper.java:3816)
+	at fr.axa.pfel.wspfelv3.ged.impl.configuration.MultipartResponseDecoder.decode(MultipartResponseDecoder.java:53)
+	at fr.axa.pfel.wspfelv3.ged.impl.configuration.MultipartResponseDecoderTest.decode_shouldParseMultipartCorrectly(MultipartResponseDecoderTest.java:96)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
