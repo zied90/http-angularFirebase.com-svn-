@@ -1,319 +1,175 @@
-package fr.axa.pfel.wspfelv3.services.orchestration.impl;
 
-import feign.form.FormData;
-import fr.axa.pfel.client.model.*;
-import fr.axa.pfel.wspfelv3.aspose.AsposeService;
-import fr.axa.pfel.wspfelv3.controller.configuration.GenerateProperties;
-import fr.axa.pfel.wspfelv3.converter.ICallConverter;
-import fr.axa.pfel.wspfelv3.ged.api.GedService;
-import fr.axa.pfel.wspfelv3.savedocnas.api.SaveDocumentNasService;
-import fr.axa.pfel.wspfelv3.services.orchestration.impl.SearchAndConcatServiceImpl;
-import fr.axa.pfel.wspfelv3.storage.api.StorageService;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.ByteArrayOutputStream;
-import java.util.List;
-
-@ExtendWith(MockitoExtension.class)
-class SearchAndConcatServiceImplTest {
-    @Mock
-    private StorageService storageService;
-    @Mock
-    private AsposeService asposeService;
-    @Mock
-    private ConverterFactory converterFactory;
-    @Mock
-    private GedService gedService;
-    @Mock
-    private GenerateProperties generateProperties;
-    @Mock
-    private SaveDocumentNasService saveDocumentNasService;
-    @InjectMocks
-    private SearchAndConcatServiceImpl searchAndConcatService;
-    @Mock
-    private ICallConverter converter;
-    @Test
-    void shouldConvertDocumentSuccessfully() throws Exception {
-        // Arrange
-        String user = "testUser";
-        String ecmRefDoc = "ECM123";
-        String project = "PROJ";
-        // Mock GED search
-        SearchDocumentsMetadatasResponse response = new SearchDocumentsMetadatasResponse();
-        SearchDocumentsMetadatasResponseDocumentsInner doc = new SearchDocumentsMetadatasResponseDocumentsInner();
-        doc.setProperties(List.of(new Property().key("ECM_REF_DOC").value(ecmRefDoc)));
-        response.setDocuments(List.of(doc));
-        Mockito.when(gedService.searchDocumentsFromGed(user, ecmRefDoc, project)).thenReturn(response);
-        // Mock GED getDocument
-        DocumentBinaryContentPost200Response binaryResponse = new DocumentBinaryContentPost200Response();
-        GetDocumentContentResponse content = new GetDocumentContentResponse();
-        content.setExtension("PDF");
-        binaryResponse.setGetDocumentContentResponse(content);
-        binaryResponse.setFile( FormData.builder().data("dummyData".getBytes()).build());
-        Mockito.when(gedService.getDocumentGed(Mockito.eq(user), Mockito.anyList(), Mockito.eq(project)))
-                .thenReturn(binaryResponse);
-        // Mock converter
-        Mockito.when(converterFactory.getConverter("PDF")).thenReturn(converter);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        outputStream.write("converted".getBytes());
-        Mockito.when(converter.getConvertedDocument(Mockito.any())).thenReturn(outputStream);
-        // Mock storage
-        Mockito.when(storageService.writeFileToUapInputDirectory(Mockito.eq(ecmRefDoc), Mockito.any()))
-                .thenReturn("/nas/path/ECM123.pdf");
-        // Act
-        String result = searchAndConcatService.executeSearchAndConvertDocument(user, ecmRefDoc, project);
-        // Assert
-        Assertions.assertEquals("/nas/path/ECM123.pdf", result);
-    }
-}
-
-
-package fr.axa.pfel.wspfelv3.services.orchestration.impl;
-
-import static fr.axa.pfel.wspfelv3.constant.Constants.CONCAT_UAP_LOG_PREFIX;
-import static fr.axa.pfel.wspfelv3.document.DocumentUtils.getExtension;
-
-import fr.axa.apidoc.services.ConvertAndConcatDocFault;
-import fr.axa.pfel.client.model.*;
-import fr.axa.pfel.wspfelv3.aspose.AsposeService;
-import fr.axa.pfel.wspfelv3.constant.Constants;
-import fr.axa.pfel.wspfelv3.constants.Output;
-import fr.axa.pfel.wspfelv3.controller.configuration.GenerateProperties;
-import fr.axa.pfel.wspfelv3.converter.ICallConverter;
-import fr.axa.pfel.wspfelv3.domain.DocumentToConvert;
-import fr.axa.pfel.wspfelv3.ged.api.GedService;
-import fr.axa.pfel.wspfelv3.savedocnas.UploadException;
-import fr.axa.pfel.wspfelv3.savedocnas.api.SaveDocumentNasService;
-import fr.axa.pfel.wspfelv3.savedocnas.domain.UploadData;
-import fr.axa.pfel.wspfelv3.services.orchestration.SearchAndConcatService;
-import fr.axa.pfel.wspfelv3.storage.api.StorageService;
-
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.*;
-import java.util.Locale;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-@Service
-public class SearchAndConcatServiceImpl implements SearchAndConcatService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SearchAndConcatServiceImpl.class);
-
-    private final ConverterFactory converterFactory;
-    private final StorageService storageService;
-    private final AsposeService asposeService;
-    private final GedService gedService;
-    private final GenerateProperties generateProperties;
-
-    private final SaveDocumentNasService saveDocumentNasService;
-
-
-    public SearchAndConcatServiceImpl(StorageService storageService, AsposeService asposeService,
-        ConverterFactory converterFactory, GedService gedService,
-        GenerateProperties generateProperties,
-        SaveDocumentNasService saveDocumentNasService) {
-        this.storageService = storageService;
-        this.asposeService = asposeService;
-        this.converterFactory = converterFactory;
-        this.gedService = gedService;
-        this.generateProperties = generateProperties;
-
-        this.saveDocumentNasService = saveDocumentNasService;
-    }
-
-    private static boolean isDocumentNotEmpty(
-            SearchDocumentsMetadatasResponse searchDocumentsResponseType) {
-        return searchDocumentsResponseType != null && searchDocumentsResponseType.getDocuments() != null
-            && !searchDocumentsResponseType.getDocuments().isEmpty();
-    }
-
-    private static List<SearchDocumentsMetadatasResponseDocumentsInner> filterAndRemoveRedundantDocs(
-            SearchDocumentsMetadatasResponse searchDocumentsResponseType) {
-        List<SearchDocumentsMetadatasResponseDocumentsInner> docList = searchDocumentsResponseType.getDocuments();
-
-        Map<String, Integer> docsIdsRefMap = computeIdRefByDocuments(searchDocumentsResponseType);
-        if (docList != null && !docList.isEmpty()) {
-            Iterator<SearchDocumentsMetadatasResponseDocumentsInner> it = docList.iterator();
-            while (it.hasNext()) {
-                SearchDocumentsMetadatasResponseDocumentsInner currentDoc = it.next();
-                String curentEcmRefDoc = extractPropertyValueByKey(currentDoc);
-                if (curentEcmRefDoc != null && docsIdsRefMap.get(curentEcmRefDoc) != 1) {
-                    String error = CONCAT_UAP_LOG_PREFIX + "EcmRefDoc : " + curentEcmRefDoc
-                        + " contains several DocIds !!!";
-                    LOGGER.info(error);
-                    it.remove();
-                }
+  le client ma dit voci u_n exemple qui marche    mais moi jai ca est ce que  va ne marche pas  jazi ca {
+  "Status": "KO",
+  "Code": "INTERNAL_SERVER_ERROR",
+  "Label": null,
+  "Message": "Content of file Contrat_Client was not sent"
+}  --header 'content-type: multipart/form-data' \
+  --form 'UploadRequest={
+    "Interaction": "sync",
+    "CommonParameters": {
+        "Locale": "fr-fr",
+        "ApplicationCaller": "FRONTEADAPTALIA"
+    },
+    "DocumentProperties": {
+        "Name": "Contrat_Client",
+        "Extension": ".pdf",
+        "Properties": [
+            {
+                "Key": "ecm_SensFlux",
+                "Value": "Sortant"
+            },
+            {
+                "Key": "ecm_NbPage",
+                "Value": "2"
+            },
+            {
+                "Key": "ecm_Extension",
+                "Value": ".pdf"
+            },
+            {
+                "Key": "ecm_SAOrigine",
+                "Value": "EADAPTALIA"
+            },
+            {
+                "Key": "ecm_Visibilite",
+                "Value": "Client"
+            },
+            {
+                "Key": "ecm_NomClient",
+                "Value": "ORANGE"
+            },
+            {
+                "Key": "ecm_PrenomClient",
+                "Value": ""
+            },
+            {
+                "Key": "ecm_NumContratAutre",
+                "Value": "2524756612000"
+            },
+            {
+                "Key": "ecm_NumDemande",
+                "Value": "246b87f3-9599-4746-b52c-494577b9a5e2"
+            },
+            {
+                "Key": "ecm_CanalFrom",
+                "Value": "EADAPTALIA"
+            },
+            {
+                "Key": "ecm_CanalTo",
+                "Value": "EADAPTALIA"
+            },
+            {
+                "Key": "ecm_NomDoc",
+                "Value": "Document d'\''information sur le produit d'\''assurance"
+            },
+            {
+                "Key": "ecm_Societe",
+                "Value": "AXA France"
+            },
+            {
+                "Key": "ecm_Branche",
+                "Value": "Vie collective santé"
+            },
+            {
+                "Key": "ecm_SousBranche",
+                "Value": "Métropolitain"
+            },
+            {
+                "Key": "ecm_Produit",
+                "Value": "1486_Bureaux d'\''études techniques, cabinets d'\''ingénieurs-cons"
+            },
+            {
+                "Key": "ecm_CodePtf",
+                "Value": "0062040344"
+            },
+            {
+                "Key": "ecm_ReseauDistrib",
+                "Value": "AGA"
+            },
+            {
+                "Key": "ecm_Motif",
+                "Value": "Socle"
+            },
+            {
+                "Key": "ecm_TypeCourrier",
+                "Value": "Courrier"
+            },
+            {
+                "Key": "ecm_TypeDemat",
+                "Value": "Editique"
+            },
+            {
+                "Key": "ecm_Origine",
+                "Value": "Siege"
+            },
+            {
+                "Key": "ecm_IdPublic",
+                "Value": "38012986608447"
+            },
+            {
+                "Key": "ecm_NumContratFCA",
+                "Value": "2524756612000P19"
+            },
+            {
+                "Key": "ecm_StatutSignature",
+                "Value": "Non signé"
+            },
+            {
+                "Key": "ecm_Statut",
+                "Value": "Archive"
+            },
+            {
+                "Key": "ecm_TopMedical",
+                "Value": "Non"
+            },
+            {
+                "Key": "ecm_TopBanque",
+                "Value": "Non"
+            },
+            {
+                "Key": "ecm_TopVIP",
+                "Value": "Non"
+            },
+            {
+                "Key": "ecm_TopRH",
+                "Value": "Non"
+            },
+            {
+                "Key": "ecm_TopBrouillon",
+                "Value": "Non"
+            },
+            {
+                "Key": "ecm_TypeDocument",
+                "Value": "DIPA"
+            },
+            {
+                "Key": "spe_CodeService",
+                "Value": ""
+            },
+            {
+                "Key": "ecm_DateRcptHorsGed",
+                "Value": "2025-05-07T11:52:16"
+            },
+            {
+                "Key": "ecm_DatePurge",
+                "Value": "2028-05-07T11:52:16"
+            },
+            {
+                "Key": "ecm_DateEffetDebut",
+                "Value": "2025-03-01T12:00:00"
             }
-        }
-
-        return docList;
+        ]
     }
-
-    private static Map<String, Integer> computeIdRefByDocuments(
-            SearchDocumentsMetadatasResponse searchDocumentsResponseType) {
-        int docRec;
-        Map<String, Integer> docsIdsRefMap = new HashMap<>();
-        for (SearchDocumentsMetadatasResponseDocumentsInner document : searchDocumentsResponseType.getDocuments()
-            ) {
-            String ecmRefDoc = extractPropertyValueByKey(document);
-            if (ecmRefDoc != null) {
-                docRec =
-                    docsIdsRefMap.get(ecmRefDoc) == null ? 1 : (docsIdsRefMap.get(ecmRefDoc) + 1);
-                docsIdsRefMap.put(ecmRefDoc, docRec);
-            }
-        }
-        return docsIdsRefMap;
-    }
-
-    private static String extractPropertyValueByKey(
-            SearchDocumentsMetadatasResponseDocumentsInner document) {
-        if (document != null && document.getProperties() != null) {
-            return document.getProperties().stream().filter(
-                    property -> property.getKey().toUpperCase(Locale.FRENCH).trim()
-                        .equals(Constants.ECM_REF_DOC.toUpperCase(Locale.FRENCH).trim())).findFirst()
-                .map(Property::getValue).orElse(null);
-        }
-        return null;
-    }
-
-    private static void manageExtensionNotFound(List<SearchDocumentsMetadatasResponseDocumentsInner> documents,
-                                                GetDocumentContentResponse getDocumentResponseType) {
-        if (documents != null && !documents.isEmpty()) {
-            String error =
-                CONCAT_UAP_LOG_PREFIX + "[DOC : " + documents.getFirst().getDocId() + "]" + "Extension "
-                    + getDocumentResponseType.getExtension() + " unsupported !!!!";
-            LOGGER.error(error);
-        }
-    }
+}' \
+  --form 'Content=@C:\Users\B609EN\Downloads\Contrat_Client.pdf'
 
 
-    @Override
-    public String convertAndConcatEcmDocs(fr.axa.pfel.wspfelv3.domain.document.Document document,
-        List<String> ecmRefDocs) throws IOException, ConvertAndConcatDocFault, UploadException {
-        LOGGER.info(CONCAT_UAP_LOG_PREFIX + "Start service");
-        var technicalData =
-            (document != null && document.getTechnicalData() != null) ? document.getTechnicalData()
-                : null;
-        var idRequest = (technicalData != null) ? technicalData.getIdRequest() : null;
-        var user = (technicalData != null) ? technicalData.getUser() : null;
-        if (user != null && ecmRefDocs != null && !ecmRefDocs.isEmpty()) {
-            final long count = ecmRefDocs.stream()
-                .map(ecmRefDoc -> executeSearchAndConvertDocument(user, ecmRefDoc, document.getTechnicalData().getProject()))
-                .filter(Objects::nonNull).count();
+et voici exemple qu il ma fournier qui marche -----------A5EF6555-E859-4DB2-B33B-F3A92BF3E156
+Content-Type: application/json; charset=utf-8
+Content-Disposition: form-data; name=UploadRequest
 
-            if (ecmRefDocs.size() == count) {
-                return concatFileForComposition(idRequest, ecmRefDocs);
-
-            } else {
-                LOGGER.error("{} The final document {}.pdf was not generated",
-                    CONCAT_UAP_LOG_PREFIX, idRequest);
-            }
-
-        }
-        LOGGER.info(CONCAT_UAP_LOG_PREFIX + "End service");
-        return null;
-    }
-
-    private String concatFileForComposition(String idRequest, List<String> ecmRefDocs)
-        throws IOException, ConvertAndConcatDocFault {
-
-        if (ecmRefDocs != null) {
-            final var files = storageService.retrieveUapFilesOnNas(ecmRefDocs);
-            if (files != null && files.size() == ecmRefDocs.size()) {
-                final ByteArrayOutputStream byteArrayOutputStream = asposeService.concatAllConvertedFile(
-                    files);
-
-                //save Document NAS .path()
-                UploadData uploadData = UploadData.builder()
-                    .output(String.valueOf(Output.LOCALPRINTING))
-                    .binaryFile(byteArrayOutputStream.toByteArray())
-                    .path(idRequest + ".pdf").build();
-
-                try {
-                    saveDocumentNasService.upload(uploadData);
-                } catch (UploadException e) {
-                    LOGGER.error(e.getMessage());
-                }
-
-                return generateProperties.getNasAttachmentPathUrl() + idRequest + ".pdf";
-            }
-        }
-
-        return null;
-    }
-
-    public String executeSearchAndConvertDocument(String user, String ecmRefDoc, String project) {
-        String fileNasPath = null;
-
-   if (StringUtils.isNotBlank(ecmRefDoc)) {
-
-            // search document from GED and get the the ID document
-            SearchDocumentsMetadatasResponse searchDocumentsResponseType = gedService.searchDocumentsFromGed(
-                user, ecmRefDoc, project);
-       List<SearchDocumentsMetadatasResponseDocumentsInner> documentList = sanitizeSearchDocumentsResponseValidity(
-                searchDocumentsResponseType);
-       if (!searchDocumentsResponseType.getDocuments().isEmpty()) {
-                // Convert (aspos/sharepoint)
-                try {
-                    fileNasPath = convertDocument(user, ecmRefDoc, documentList, project);
-                } catch (IOException e) {
-                    LOGGER.error("Error in convert : {}", ecmRefDoc, e);
-                }
-            }
-        }
-        return fileNasPath;
-    }
-
-    private String convertDocument(String user, String ecmRefDoc,
-        List<SearchDocumentsMetadatasResponseDocumentsInner> documentList, String project) throws IOException {
-
-        DocumentBinaryContentPost200Response getDocumentResponseType = gedService.getDocumentGed(user,
-            documentList,  project);
-        String fileNasPath = null;
-        if (getDocumentResponseType != null) {
-            String extension = getExtension(getDocumentResponseType.getGetDocumentContentResponse().getExtension());
-            ICallConverter converterHandler = converterFactory.getConverter(extension);
-            if (converterHandler != null) {
-                final ByteArrayOutputStream convertedDocument = converterHandler.getConvertedDocument(
-                    new DocumentToConvert(
-                            getDocumentResponseType.getFile().getData(),
-                        getDocumentResponseType.getGetDocumentContentResponse().getExtension()));
-
-                fileNasPath = storageService.writeFileToUapInputDirectory(ecmRefDoc,
-                    convertedDocument.toByteArray());
-                LOGGER.info("{} Document successfully generated : {}", CONCAT_UAP_LOG_PREFIX,
-                    fileNasPath);
-            } else {
-                manageExtensionNotFound(documentList, getDocumentResponseType.getGetDocumentContentResponse());
-            }
-        }
-
-        return fileNasPath;
-    }
-
-    private List<SearchDocumentsMetadatasResponseDocumentsInner> sanitizeSearchDocumentsResponseValidity(
-            SearchDocumentsMetadatasResponse searchDocumentsResponseType) {
-        List<SearchDocumentsMetadatasResponseDocumentsInner> documentList = null;
-        if (isDocumentNotEmpty(searchDocumentsResponseType)) {
-            documentList = filterAndRemoveRedundantDocs(searchDocumentsResponseType);
-        } else {
-            LOGGER.error(CONCAT_UAP_LOG_PREFIX + "No associated documents !!!");
-        }
-
-        return documentList != null ? documentList : new ArrayList<>();
-    }
-
-
-}
-rajoute  autrres test unitaire  car actuelement jai qu unseul test
+{"Interaction":"sync","CommonParameters":{"Locale":"fr-fr","ApplicationCaller":"FRONTEADAPTALIA"},"DocumentProperties":{"Name":"Document d'information sur le produit d'assurance","Extension":".pdf","Properties":[{"Key":"ecm_SensFlux","Value":"Sortant"},{"Key":"ecm_NbPage","Value":"2"},{"Key":"ecm_Extension","Value":".pdf"},{"Key":"ecm_SAOrigine","Value":"EADAPTALIA"},{"Key":"ecm_Visibilite","Value":"Client"},{"Key":"ecm_NomClient","Value":"ORANGE"},{"Key":"ecm_PrenomClient","Value":""},{"Key":"ecm_NumContratAutre","Value":"2524756612000"},{"Key":"ecm_NumDemande","Value":"246b87f3-9599-4746-b52c-494577b9a5e2"},{"Key":"ecm_CanalFrom","Value":"EADAPTALIA"},{"Key":"ecm_CanalTo","Value":"EADAPTALIA"},{"Key":"ecm_NomDoc","Value":"Document d'information sur le produit d'assurance"},{"Key":"ecm_Societe","Value":"AXA France"},{"Key":"ecm_Branche","Value":"Vie collective santé"},{"Key":"ecm_SousBranche","Value":"Métropolitain"},{"Key":"ecm_Produit","Value":"1486_Bureaux d'études techniques, cabinets d'ingénieurs-cons"},{"Key":"ecm_CodePtf","Value":"0062040344"},{"Key":"ecm_ReseauDistrib","Value":"AGA"},{"Key":"ecm_Motif","Value":"Socle"},{"Key":"ecm_TypeCourrier","Value":"Courrier"},{"Key":"ecm_TypeDemat","Value":"Editique"},{"Key":"ecm_Origine","Value":"Siege"},{"Key":"ecm_IdPublic","Value":"38012986608447"},{"Key":"ecm_NumContratFCA","Value":"2524756612000P19"},{"Key":"ecm_StatutSignature","Value":"Non signé"},{"Key":"ecm_Statut","Value":"Archive"},{"Key":"ecm_TopMedical","Value":"Non"},{"Key":"ecm_TopBanque","Value":"Non"},{"Key":"ecm_TopVIP","Value":"Non"},{"Key":"ecm_TopRH","Value":"Non"},{"Key":"ecm_TopBrouillon","Value":"Non"},{"Key":"ecm_TypeDocument","Value":"DIPA"},{"Key":"spe_CodeService","Value":""},{"Key":"ecm_DateRcptHorsGed","Value":"2025-05-07T11:52:16"},{"Key":"ecm_DatePurge","Value":"2028-05-07T11:52:16"},{"Key":"ecm_DateEffetDebut","Value":"2025-03-01T12:00:00"}]}}
+-----------A5EF6555-E859-4DB2-B33B-F3A92BF3E156
+Content-Type: application/pdf
+Content-Disposition: form-data; name=Content; filename="Document d'information sur le produit d'assurance"; filename*=utf-8''Document%20d%27information%20sur%20le%20produit%20d%27assurance
