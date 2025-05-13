@@ -1,35 +1,319 @@
-OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
-2025-05-12T17:55:56.612+0200;WIN-73NS0MRGEO4;main;;ERROR;;;;;;f.a.p.w.s.o.i.SearchAndConcatServiceImpl
-        - [ConcatUapService : concatFileToSend] : [DOC : null]Extension pdf unsupported !!!!; 
+package fr.axa.pfel.wspfelv3.services.orchestration.impl;
 
-java.lang.AssertionError
-	at org.junit.Assert.fail(Assert.java:87)
-	at org.junit.Assert.assertTrue(Assert.java:42)
-	at org.junit.Assert.assertNotNull(Assert.java:713)
-	at org.junit.Assert.assertNotNull(Assert.java:723)
-	at fr.axa.pfel.wspfelv3.services.orchestration.impl.SearchAndConcatServiceImplTest.testExecuteSearchAndConvertDocumentSuccess(SearchAndConcatServiceImplTest.java:127)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
-	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
-	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
-	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
-	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
-	at org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)
-	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)
-	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)
-	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)
-	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
-	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
-	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
-	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
-	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
-	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
-	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
-	at org.junit.runner.JUnitCore.run(JUnitCore.java:137)
-	at com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:69)
-	at com.intellij.rt.junit.IdeaTestRunner$Repeater$1.execute(IdeaTestRunner.java:38)
-	at com.intellij.rt.execution.junit.TestsRepeater.repeat(TestsRepeater.java:11)
-	at com.intellij.rt.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:35)
-	at com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:232)
-	at com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:55)
+import feign.form.FormData;
+import fr.axa.pfel.client.model.*;
+import fr.axa.pfel.wspfelv3.aspose.AsposeService;
+import fr.axa.pfel.wspfelv3.controller.configuration.GenerateProperties;
+import fr.axa.pfel.wspfelv3.converter.ICallConverter;
+import fr.axa.pfel.wspfelv3.ged.api.GedService;
+import fr.axa.pfel.wspfelv3.savedocnas.api.SaveDocumentNasService;
+import fr.axa.pfel.wspfelv3.services.orchestration.impl.SearchAndConcatServiceImpl;
+import fr.axa.pfel.wspfelv3.storage.api.StorageService;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.io.ByteArrayOutputStream;
+import java.util.List;
+
+@ExtendWith(MockitoExtension.class)
+class SearchAndConcatServiceImplTest {
+    @Mock
+    private StorageService storageService;
+    @Mock
+    private AsposeService asposeService;
+    @Mock
+    private ConverterFactory converterFactory;
+    @Mock
+    private GedService gedService;
+    @Mock
+    private GenerateProperties generateProperties;
+    @Mock
+    private SaveDocumentNasService saveDocumentNasService;
+    @InjectMocks
+    private SearchAndConcatServiceImpl searchAndConcatService;
+    @Mock
+    private ICallConverter converter;
+    @Test
+    void shouldConvertDocumentSuccessfully() throws Exception {
+        // Arrange
+        String user = "testUser";
+        String ecmRefDoc = "ECM123";
+        String project = "PROJ";
+        // Mock GED search
+        SearchDocumentsMetadatasResponse response = new SearchDocumentsMetadatasResponse();
+        SearchDocumentsMetadatasResponseDocumentsInner doc = new SearchDocumentsMetadatasResponseDocumentsInner();
+        doc.setProperties(List.of(new Property().key("ECM_REF_DOC").value(ecmRefDoc)));
+        response.setDocuments(List.of(doc));
+        Mockito.when(gedService.searchDocumentsFromGed(user, ecmRefDoc, project)).thenReturn(response);
+        // Mock GED getDocument
+        DocumentBinaryContentPost200Response binaryResponse = new DocumentBinaryContentPost200Response();
+        GetDocumentContentResponse content = new GetDocumentContentResponse();
+        content.setExtension("PDF");
+        binaryResponse.setGetDocumentContentResponse(content);
+        binaryResponse.setFile( FormData.builder().data("dummyData".getBytes()).build());
+        Mockito.when(gedService.getDocumentGed(Mockito.eq(user), Mockito.anyList(), Mockito.eq(project)))
+                .thenReturn(binaryResponse);
+        // Mock converter
+        Mockito.when(converterFactory.getConverter("PDF")).thenReturn(converter);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        outputStream.write("converted".getBytes());
+        Mockito.when(converter.getConvertedDocument(Mockito.any())).thenReturn(outputStream);
+        // Mock storage
+        Mockito.when(storageService.writeFileToUapInputDirectory(Mockito.eq(ecmRefDoc), Mockito.any()))
+                .thenReturn("/nas/path/ECM123.pdf");
+        // Act
+        String result = searchAndConcatService.executeSearchAndConvertDocument(user, ecmRefDoc, project);
+        // Assert
+        Assertions.assertEquals("/nas/path/ECM123.pdf", result);
+    }
+}
+
+
+package fr.axa.pfel.wspfelv3.services.orchestration.impl;
+
+import static fr.axa.pfel.wspfelv3.constant.Constants.CONCAT_UAP_LOG_PREFIX;
+import static fr.axa.pfel.wspfelv3.document.DocumentUtils.getExtension;
+
+import fr.axa.apidoc.services.ConvertAndConcatDocFault;
+import fr.axa.pfel.client.model.*;
+import fr.axa.pfel.wspfelv3.aspose.AsposeService;
+import fr.axa.pfel.wspfelv3.constant.Constants;
+import fr.axa.pfel.wspfelv3.constants.Output;
+import fr.axa.pfel.wspfelv3.controller.configuration.GenerateProperties;
+import fr.axa.pfel.wspfelv3.converter.ICallConverter;
+import fr.axa.pfel.wspfelv3.domain.DocumentToConvert;
+import fr.axa.pfel.wspfelv3.ged.api.GedService;
+import fr.axa.pfel.wspfelv3.savedocnas.UploadException;
+import fr.axa.pfel.wspfelv3.savedocnas.api.SaveDocumentNasService;
+import fr.axa.pfel.wspfelv3.savedocnas.domain.UploadData;
+import fr.axa.pfel.wspfelv3.services.orchestration.SearchAndConcatService;
+import fr.axa.pfel.wspfelv3.storage.api.StorageService;
+
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.*;
+import java.util.Locale;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+@Service
+public class SearchAndConcatServiceImpl implements SearchAndConcatService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchAndConcatServiceImpl.class);
+
+    private final ConverterFactory converterFactory;
+    private final StorageService storageService;
+    private final AsposeService asposeService;
+    private final GedService gedService;
+    private final GenerateProperties generateProperties;
+
+    private final SaveDocumentNasService saveDocumentNasService;
+
+
+    public SearchAndConcatServiceImpl(StorageService storageService, AsposeService asposeService,
+        ConverterFactory converterFactory, GedService gedService,
+        GenerateProperties generateProperties,
+        SaveDocumentNasService saveDocumentNasService) {
+        this.storageService = storageService;
+        this.asposeService = asposeService;
+        this.converterFactory = converterFactory;
+        this.gedService = gedService;
+        this.generateProperties = generateProperties;
+
+        this.saveDocumentNasService = saveDocumentNasService;
+    }
+
+    private static boolean isDocumentNotEmpty(
+            SearchDocumentsMetadatasResponse searchDocumentsResponseType) {
+        return searchDocumentsResponseType != null && searchDocumentsResponseType.getDocuments() != null
+            && !searchDocumentsResponseType.getDocuments().isEmpty();
+    }
+
+    private static List<SearchDocumentsMetadatasResponseDocumentsInner> filterAndRemoveRedundantDocs(
+            SearchDocumentsMetadatasResponse searchDocumentsResponseType) {
+        List<SearchDocumentsMetadatasResponseDocumentsInner> docList = searchDocumentsResponseType.getDocuments();
+
+        Map<String, Integer> docsIdsRefMap = computeIdRefByDocuments(searchDocumentsResponseType);
+        if (docList != null && !docList.isEmpty()) {
+            Iterator<SearchDocumentsMetadatasResponseDocumentsInner> it = docList.iterator();
+            while (it.hasNext()) {
+                SearchDocumentsMetadatasResponseDocumentsInner currentDoc = it.next();
+                String curentEcmRefDoc = extractPropertyValueByKey(currentDoc);
+                if (curentEcmRefDoc != null && docsIdsRefMap.get(curentEcmRefDoc) != 1) {
+                    String error = CONCAT_UAP_LOG_PREFIX + "EcmRefDoc : " + curentEcmRefDoc
+                        + " contains several DocIds !!!";
+                    LOGGER.info(error);
+                    it.remove();
+                }
+            }
+        }
+
+        return docList;
+    }
+
+    private static Map<String, Integer> computeIdRefByDocuments(
+            SearchDocumentsMetadatasResponse searchDocumentsResponseType) {
+        int docRec;
+        Map<String, Integer> docsIdsRefMap = new HashMap<>();
+        for (SearchDocumentsMetadatasResponseDocumentsInner document : searchDocumentsResponseType.getDocuments()
+            ) {
+            String ecmRefDoc = extractPropertyValueByKey(document);
+            if (ecmRefDoc != null) {
+                docRec =
+                    docsIdsRefMap.get(ecmRefDoc) == null ? 1 : (docsIdsRefMap.get(ecmRefDoc) + 1);
+                docsIdsRefMap.put(ecmRefDoc, docRec);
+            }
+        }
+        return docsIdsRefMap;
+    }
+
+    private static String extractPropertyValueByKey(
+            SearchDocumentsMetadatasResponseDocumentsInner document) {
+        if (document != null && document.getProperties() != null) {
+            return document.getProperties().stream().filter(
+                    property -> property.getKey().toUpperCase(Locale.FRENCH).trim()
+                        .equals(Constants.ECM_REF_DOC.toUpperCase(Locale.FRENCH).trim())).findFirst()
+                .map(Property::getValue).orElse(null);
+        }
+        return null;
+    }
+
+    private static void manageExtensionNotFound(List<SearchDocumentsMetadatasResponseDocumentsInner> documents,
+                                                GetDocumentContentResponse getDocumentResponseType) {
+        if (documents != null && !documents.isEmpty()) {
+            String error =
+                CONCAT_UAP_LOG_PREFIX + "[DOC : " + documents.getFirst().getDocId() + "]" + "Extension "
+                    + getDocumentResponseType.getExtension() + " unsupported !!!!";
+            LOGGER.error(error);
+        }
+    }
+
+
+    @Override
+    public String convertAndConcatEcmDocs(fr.axa.pfel.wspfelv3.domain.document.Document document,
+        List<String> ecmRefDocs) throws IOException, ConvertAndConcatDocFault, UploadException {
+        LOGGER.info(CONCAT_UAP_LOG_PREFIX + "Start service");
+        var technicalData =
+            (document != null && document.getTechnicalData() != null) ? document.getTechnicalData()
+                : null;
+        var idRequest = (technicalData != null) ? technicalData.getIdRequest() : null;
+        var user = (technicalData != null) ? technicalData.getUser() : null;
+        if (user != null && ecmRefDocs != null && !ecmRefDocs.isEmpty()) {
+            final long count = ecmRefDocs.stream()
+                .map(ecmRefDoc -> executeSearchAndConvertDocument(user, ecmRefDoc, document.getTechnicalData().getProject()))
+                .filter(Objects::nonNull).count();
+
+            if (ecmRefDocs.size() == count) {
+                return concatFileForComposition(idRequest, ecmRefDocs);
+
+            } else {
+                LOGGER.error("{} The final document {}.pdf was not generated",
+                    CONCAT_UAP_LOG_PREFIX, idRequest);
+            }
+
+        }
+        LOGGER.info(CONCAT_UAP_LOG_PREFIX + "End service");
+        return null;
+    }
+
+    private String concatFileForComposition(String idRequest, List<String> ecmRefDocs)
+        throws IOException, ConvertAndConcatDocFault {
+
+        if (ecmRefDocs != null) {
+            final var files = storageService.retrieveUapFilesOnNas(ecmRefDocs);
+            if (files != null && files.size() == ecmRefDocs.size()) {
+                final ByteArrayOutputStream byteArrayOutputStream = asposeService.concatAllConvertedFile(
+                    files);
+
+                //save Document NAS .path()
+                UploadData uploadData = UploadData.builder()
+                    .output(String.valueOf(Output.LOCALPRINTING))
+                    .binaryFile(byteArrayOutputStream.toByteArray())
+                    .path(idRequest + ".pdf").build();
+
+                try {
+                    saveDocumentNasService.upload(uploadData);
+                } catch (UploadException e) {
+                    LOGGER.error(e.getMessage());
+                }
+
+                return generateProperties.getNasAttachmentPathUrl() + idRequest + ".pdf";
+            }
+        }
+
+        return null;
+    }
+
+    public String executeSearchAndConvertDocument(String user, String ecmRefDoc, String project) {
+        String fileNasPath = null;
+
+   if (StringUtils.isNotBlank(ecmRefDoc)) {
+
+            // search document from GED and get the the ID document
+            SearchDocumentsMetadatasResponse searchDocumentsResponseType = gedService.searchDocumentsFromGed(
+                user, ecmRefDoc, project);
+       List<SearchDocumentsMetadatasResponseDocumentsInner> documentList = sanitizeSearchDocumentsResponseValidity(
+                searchDocumentsResponseType);
+       if (!searchDocumentsResponseType.getDocuments().isEmpty()) {
+                // Convert (aspos/sharepoint)
+                try {
+                    fileNasPath = convertDocument(user, ecmRefDoc, documentList, project);
+                } catch (IOException e) {
+                    LOGGER.error("Error in convert : {}", ecmRefDoc, e);
+                }
+            }
+        }
+        return fileNasPath;
+    }
+
+    private String convertDocument(String user, String ecmRefDoc,
+        List<SearchDocumentsMetadatasResponseDocumentsInner> documentList, String project) throws IOException {
+
+        DocumentBinaryContentPost200Response getDocumentResponseType = gedService.getDocumentGed(user,
+            documentList,  project);
+        String fileNasPath = null;
+        if (getDocumentResponseType != null) {
+            String extension = getExtension(getDocumentResponseType.getGetDocumentContentResponse().getExtension());
+            ICallConverter converterHandler = converterFactory.getConverter(extension);
+            if (converterHandler != null) {
+                final ByteArrayOutputStream convertedDocument = converterHandler.getConvertedDocument(
+                    new DocumentToConvert(
+                            getDocumentResponseType.getFile().getData(),
+                        getDocumentResponseType.getGetDocumentContentResponse().getExtension()));
+
+                fileNasPath = storageService.writeFileToUapInputDirectory(ecmRefDoc,
+                    convertedDocument.toByteArray());
+                LOGGER.info("{} Document successfully generated : {}", CONCAT_UAP_LOG_PREFIX,
+                    fileNasPath);
+            } else {
+                manageExtensionNotFound(documentList, getDocumentResponseType.getGetDocumentContentResponse());
+            }
+        }
+
+        return fileNasPath;
+    }
+
+    private List<SearchDocumentsMetadatasResponseDocumentsInner> sanitizeSearchDocumentsResponseValidity(
+            SearchDocumentsMetadatasResponse searchDocumentsResponseType) {
+        List<SearchDocumentsMetadatasResponseDocumentsInner> documentList = null;
+        if (isDocumentNotEmpty(searchDocumentsResponseType)) {
+            documentList = filterAndRemoveRedundantDocs(searchDocumentsResponseType);
+        } else {
+            LOGGER.error(CONCAT_UAP_LOG_PREFIX + "No associated documents !!!");
+        }
+
+        return documentList != null ? documentList : new ArrayList<>();
+    }
+
+
+}
+rajoute  autrres test unitaire  car actuelement jai qu unseul test
