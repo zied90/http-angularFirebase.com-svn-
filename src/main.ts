@@ -149,115 +149,83 @@ public class Log {
 
 }
 
- @Override
-    public ResponseEntity<Iterable<Log>> findPaginated(PaginationParameters pagination) {
-        Pageable pageable = pageableMapper.from(pagination);
-        return ResponseEntity.ok(iLogService.findPaginated(pageable));
+package fr.axa.pfel.console;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Entity
+@Getter @Setter
+@Table(name = "T_LOGS_TEMPLATE")
+public class LogTemplate {
+    @Id
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "LOGS_APPLICATION_ID", referencedColumnName = "ID", nullable = false)
+    private LogApplication logApplication;
+
+    @Column(name = "TEMPLATE")
+    private String template;
+
+}
+package fr.axa.pfel.console;
+
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Entity
+@Getter @Setter
+@Table(name = "T_LOGS_APPLICATION")
+public class LogApplication {
+
+    @Id
+    private Long id;
+
+    @Column(name = "APP_NAME")
+    private String appName;
+
+}
+
+	@Query("SELECT new fr.axa.pfel.console.LogDTO(" +
+			"l.action, l.clientRequest, l.time, l.userName, l.logApplication.appName, " +
+			"l.numContract, l.portfolio, l.server, l.isError) " +
+			"FROM Log l")
+	Page<LogDTO> findAllSummarized(Pageable pageable);  voci c'est que jai package fr.axa.pfel.console;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+public class LogDTO {
+
+    private String action;
+    private String clientRequest;
+    private Double time;
+    private String userName;
+    private String appName;
+    private String numContract;
+    private String portfolio;
+    private String server;
+    private boolean isError;
+    // Constructeur explicite utilisé par JPQL
+    public LogDTO(String action, String clientRequest, Double time, String userName,
+                  String appName, String numContract, String portfolio,
+                  String server, boolean isError) {
+        this.action = action;
+        this.clientRequest = clientRequest;
+        this.time = time;
+        this.userName = userName;
+        this.appName = appName;
+        this.numContract = numContract;
+        this.portfolio = portfolio;
+        this.server = server;
+        this.isError = isError;
     }
+}
 
-
-    @Override
-    public Page<Log> findPaginated(Pageable pageable) {
-
-        return logRepository.findAll(pageable);
-    }
-
-
-   @GetMapping(value = "/logs")
-    ResponseEntity<Iterable<Log>> findPaginated(PaginationParameters pagination);
-
-    @Operation(summary = "Recherche de logs", tags = {"Logs"})
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Récherche de logs réussie"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Erreur de validation de la requête"),
-        @ApiResponse(responseCode = "500", description = "Erreur interne")}
-    ) moi au chargement jai besoin que de action ,clientRequest,time,userName ,logApplication.appName,numContract,portfolio,server,isError  mais lorsque je cllique  doggle deytatl je recupere  les autre information  <>
-      <div className="expanded-row">
-        <div className="expanded-row__column">
-          <label className="fontLabel">Id :</label> <span>{item.id}</span>
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">IdRequest :</label>
-          <span>{item.request}</span>
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">IdReference :</label> {item.information}
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">Num Client : </label>
-          {item.numClient}
-        </div>
-      </div>
-      <div className="expanded-row">
-        <div className="expanded-row__column">
-          <label className="fontLabel">Num subscriber :</label>{" "}
-          <span>{item.numSubscriber}</span>
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">Num sinistre :</label>
-          {item.numClaim}
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">Nom Client : </label>
-          <span> {item.clientName}</span>
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">Time HP (s) :</label>
-          <span>
-            {isNaN(item.time)
-              ? "0"
-              : item.time === 0
-              ? "0"
-              : item.time.toFixed(2)}
-          </span>
-        </div>
-      </div>
-      <div className="expanded-row">
-        <div className="expanded-row__column">
-          <label className="fontLabel">Nombre de page :</label>
-          <span>{item.numPages}</span>
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">Nombre de doc :</label>
-          <span>{item.numDoc}</span>
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">Web :</label> {item.isWeb.toString()}
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">Masspiritting :</label>{" "}
-          {item.isMassPrinting.toString()}
-        </div>
-      </div>
-      <div className="expanded-row">
-        <div className="expanded-row__column">
-          <label className="fontLabel">Ged :</label> {item.isGed.toString()}
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">Email :</label> {item.isEmail.toString()}
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">Stored :</label>{" "}
-          {item.isStored.toString()}
-        </div>
-        <div className="expanded-row__column">
-          <label className="fontLabel">Live:</label> {item.isLive.toString()}
-        </div>
-      </div>
-      <div className="expanded-row">
-        <div className="expanded-row__column">
-          <label className="fontLabel">LocalPrinting :</label>{" "}
-          {item.isLocalPrinting.toString()}
-        </div>
-        <div className="expanded-row__column"></div>
-        <div className="expanded-row__column"></div>
-        <div className="expanded-row__column"></div>
-      </div>
-      {item.isError ? (
-        <div className="row p-1 ">
-          <div className="alert alert-danger" role="alert">
-          {item.error || "Pas d'erreur remontée par l'API"}
-          </div>
-        </div>
-      ) : null}
-    </> moi je veux recuperer que ce que jai besoin car jai problemen lenteur 
+pour template cest  template qui existe dans logTemplate et appName qui existe dans logApplication
