@@ -1,22 +1,51 @@
-@Query("""
-			   SELECT new fr.axa.pfel.console.LogDTO(
-			       l.id,
-			       l.action,
-			       l.clientRequest,
-			       l.time,
-			       l.userName,
-			       a.appName,
-			       l.numContract,
-			       l.portfolio,
-			       l.server,
-			       l.isError,
-			       t.template,
-			       l.dateCreated
-			   )
-			   FROM Log l
-			   LEFT JOIN l.logApplication a
-			   LEFT JOIN l.logTemplate t
-			""")
+Hibernate: 
+    select
+        top (?) l1_0.id,
+        l1_0.action,
+        l1_0.client_request,
+        l1_0.time,
+        l1_0.name_user,
+        la1_0.app_name,
+        l1_0.num_contract,
+        l1_0.portfolio,
+        l1_0.server,
+        l1_0.is_error,
+        lt1_0.template,
+        l1_0.date_created 
+    from
+        t_logs l1_0 
+    join
+        t_logs_application la1_0 
+            on la1_0.id=l1_0.logs_application_id 
+    join
+        t_logs_template lt1_0 
+            on lt1_0.id=l1_0.logs_template_id 
+    order by
+        l1_0.date_created desc
+Hibernate: 
+    select
+        count_big(l1_0.id) 
+    from
+        t_logs l1_0
+
+
+	@Query("""
+  SELECT new fr.axa.pfel.console.LogDTO(
+      l.id,
+      l.action,
+      l.clientRequest,
+      l.time,
+      l.userName,
+      l.logApplication.appName,
+      l.numContract,
+      l.portfolio,
+      l.server,
+      l.isError,
+      l.logTemplate.template,
+      l.dateCreated
+  )
+  FROM Log l
+""")
 	Page<LogDTO> findAllSummarized(Pageable pageable);
 
 
@@ -169,87 +198,4 @@ public class Log {
         return Boolean.TRUE.equals(isError);
     }
 
-}
-package fr.axa.pfel.console;
-
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-@Entity
-@Getter @Setter
-@Table(name = "T_LOGS_TEMPLATE")
-public class LogTemplate {
-    @Id
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "LOGS_APPLICATION_ID", referencedColumnName = "ID", nullable = false)
-    private LogApplication logApplication;
-
-    @Column(name = "TEMPLATE")
-    private String template;
-
-}
-package fr.axa.pfel.console;
-
-
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-@Entity
-@Getter @Setter
-@Table(name = "T_LOGS_APPLICATION")
-public class LogApplication {
-
-    @Id
-    private Long id;
-
-    @Column(name = "APP_NAME")
-    private String appName;
-
-}
-
-
-package fr.axa.pfel.console;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-
-@Data
-@NoArgsConstructor
-public class LogDTO {
-    private Long id;
-    private String action;
-    private String clientRequest;
-    private Double time;
-    private String userName;
-    private String appName;
-    private String numContract;
-    private String portfolio;
-    private String server;
-    private boolean isError;
-    private String template;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime dateCreated;
-    public LogDTO(Long id,String action, String clientRequest, Double time, String userName,
-                  String appName, String numContract, String portfolio,
-                  String server, boolean isError, String template, LocalDateTime dateCreated) {
-        this.id=id;
-        this.action = action;
-        this.clientRequest = clientRequest;
-        this.time = time;
-        this.userName = userName;
-        this.appName = appName;
-        this.numContract = numContract;
-        this.portfolio = portfolio;
-        this.server = server;
-        this.isError = isError;
-        this.template = template;
-        this.dateCreated = dateCreated;
-    }
 }
