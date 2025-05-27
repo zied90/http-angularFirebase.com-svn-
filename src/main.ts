@@ -1,71 +1,49 @@
-package fr.axa.pfel.console;
+ private getHeadersAndRows(data: string[][]): { headers: string[]; rows: string[][] } {
+    let [headers, ...rows] = data;
+    console.log(headers, "headersheaders");
+    // detect if headers is an headers row, if we have an email in the headers, we can assume that the headers are not correct
+    if (/\w+@\w+.\w/.test(headers.join(" "))) {
+      const newHeadersRow = headers.map(() => "");
+      const actualHeaders = headers.map((h) => h);
+      // first find the header with the email
+      const emailHeaderIndex = actualHeaders.findIndex((header) => /\w+@\w+.\w/.test(header));
+      if (emailHeaderIndex >= 0) {
+        newHeadersRow[emailHeaderIndex] = "email";
+        actualHeaders[emailHeaderIndex] = "";
+      }
+      // find the header with the id
+      const idHeaderIndex = actualHeaders.findIndex((header) => /^\w\d{5,6}$/.test(header));
+      if (idHeaderIndex > -1) {
+        newHeadersRow[idHeaderIndex] = "id";
+        actualHeaders[idHeaderIndex] = "";
+      }
+      // find the header with the type
+      console.log(
+        actualHeaders.findIndex((header) => /admin|agt/i.test(header)),
+        "dddddddddd"
+      );
+      const typeHeaderIndex = actualHeaders.findIndex((header) => /admin|agt/i.test(header));
+      if (typeHeaderIndex > -1) {
+        newHeadersRow[typeHeaderIndex] = "type";
+        actualHeaders[typeHeaderIndex] = "";
+      }
+      // find the header with the lastname
+      const lastnameHeaderIndex = actualHeaders.findIndex((header) => /\w+/i.test(header));
+      if (lastnameHeaderIndex > -1) {
+        newHeadersRow[lastnameHeaderIndex] = "lastname";
+        actualHeaders[lastnameHeaderIndex] = "";
+      }
+      // find the header with the firstname
+      const firstnameHeaderIndex = actualHeaders.findIndex((header) => header !== "");
+      if (firstnameHeaderIndex >= 0) {
+        newHeadersRow[firstnameHeaderIndex] = "firstname";
+        actualHeaders[firstnameHeaderIndex] = "";
+      }
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.stereotype.Repository;
-
-import org.springframework.data.repository.query.Param;
-import java.util.Optional;
-
-@Repository
-public interface ILogRepository extends
-    PagingAndSortingRepository<Log, Long>,JpaRepository<Log, Long>, JpaSpecificationExecutor<Log>
-{
+      return { headers: newHeadersRow, rows: data };
+    } else {
+      return { headers, rows };
+    }
+  }
 
 
-
-	@Query("""
-  SELECT new fr.axa.pfel.console.LogDTO(
-      l.id,
-      l.action,
-      l.clientRequest,
-      l.time,
-      l.userName,
-      l.logApplication.appName,
-      l.numContract,
-      l.portfolio,
-      l.server,
-      l.isError,
-      l.logTemplate.template,
-      l.dateCreated
-  )
-  FROM Log l
-""")
-	Page<LogDTO> findAllSummarized(Pageable pageable);
-
-
-
-}
-
-package fr.axa.pfel.console;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.time.LocalDateTime;
-
-@Getter
-@Setter
-@AllArgsConstructor
-public class LogDTO {
-    private Long id;
-    private String action;
-    private String clientRequest;
-    private Double time;
-    private String userName;
-    private String appName;
-    private String numContract;
-    private String portfolio;
-    private String server;
-    private boolean isError;
-    private String template;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime dateCreated;
-
-}
