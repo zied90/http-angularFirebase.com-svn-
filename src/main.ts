@@ -46,4 +46,4 @@ const Types: FC<Props> = ({ className = "" }) => {
 export default Types;
 
 
-voici la list recuperer 
+voici la list recuperer ["CTR","CLT","SIN"]
