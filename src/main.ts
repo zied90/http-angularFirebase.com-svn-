@@ -44,3 +44,6 @@ const Types: FC<Props> = ({ className = "" }) => {
   ) : null;
 };
 export default Types;
+
+
+voici la list recuperer 
