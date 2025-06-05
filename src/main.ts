@@ -1,113 +1,233 @@
-@using AxaFrance.EDS.Resources
-@* @using System.Web.Optimization*@
+@use "../../../../toolkit/styles/functions" as fn;
+@use "../../../../toolkit/styles/variables" as vars;
+@use "../../../../toolkit/assets/fonts/icons" as icons;
 
-<h2>@WebResources.ContextTitle </h2>
-<small><em>@WebResources.MandatoryField</em></small>
-<form class="form-horizontal" ng-submit="submitContext()">
+.af-form {
+  &-item {
+    gap: var(--gap);
+    display: flex;
+    flex-direction: row;
 
-    <div class="form-group" ng-if="contexte.niveauId == 3">
-        <label class="col-xs-2 control-label">@WebResources.CustomerDatas</label>
-        <div class="col-xs-10">
-            <select class="form-control" name="donnees_clients" ng-style="{'width': '320px'}" ng-options="client.idAbonne as client.informationClient for client in contexteConseiller.portefeuille.clients" ng-model="contexte.idAbonne" ng-disabled="!editeContexteDemande"></select>
-        </div>
-    </div>
-    <div class="form-group" ng-if="contexte.niveauId == 2">
-        <label class="col-xs-2 control-label">@WebResources.ContratDatas</label>
-        <div class="col-xs-10">
-            <div class="label_uneditable" ng-bind="contexteConseiller.portefeuille.clients[0].contrats[0].informationContrat"></div>
-        </div>
-    </div>
-    <div class="form-group" ng-if="contexte.niveauId == 2 && contexte.metierId == 3"> <!--Cas de la vie individuelle-->
-        <label class="col-xs-2 control-label">@WebResources.CustomerDatas</label>
-        <div class="col-xs-10">
-            <div class="label_uneditable" ng-bind="contexteConseiller.portefeuille.clients[0].informationClientVieIndividuelle"></div>
-        </div>
-    </div>
-    <div class="form-group" ng-if="contexte.niveauId == 1">
-        <label class="col-xs-2 control-label">@WebResources.SinistreDatas</label>
-        <div class="col-xs-10">
-            <div class="label_uneditable" ng-bind="contexteConseiller.portefeuille.clients[0].contrats[0].sinistres[0].informationSinistre"></div>
-        </div>
-    </div>
+    &_label--strong > label {
+      font-weight: bold;
+    }
 
-    <div class="form-group">
-        <label class="col-xs-2 control-label" for="region">@WebResources.Perimetre </label>
-        <div class="col-xs-10">
-            <div class="radio">
-                <div class="radio-check-group" ng-repeat="perimetre in allPerimeters">
-                    <input id="{{$id}}" type="radio" name="Perimeter" value="{{perimetre.id}}" data-ng-model="contexte.perimetreId" ng-disabled="disablePerimeter(perimetre) || !editeContexteDemande" />
-                    <label for="{{$id}}" class="radio">{{ perimetre.libelle }}</label>
-                </div>
-            </div>
-        </div>
-    </div>
+    &--disabled {
+      opacity: 0.6;
+    }
 
-    <div class="form-group" ng-show="contextes.metiers.length && contexte.metierId != 3">
-        <label class="col-xs-2 control-label">@WebResources.MetierLabel</label>
-        <div class="col-xs-10">
-            <select class="form-control" ng-options="option.id as option.libelle for option in contextes.metiers" ng-model="contexte.metierId" ng-disabled="!editeContexteDemande || contexte.niveauId != 3 || initialContext.metierId">
-                <option value="">@WebResources.Select</option>
-            </select>
-        </div>
-    </div>
+    > label {
+      line-height: 1;
+      padding-top: 0.5em;
+    }
+  }
 
-    <div class="form-group" ng-show="contextes.perimetres.length == 1 && contextes.garanties.length">
-        <label class="col-xs-2 control-label">@WebResources.WarrantyUse</label>
-        <div class="col-xs-10">
-            <select class="form-control" ng-options="option.id as option.libelle for option in contextes.garanties" ng-model="contexte.garantieId" ng-disabled="!editeContexteDemande">
-                <option value="">@WebResources.Select</option>
-            </select>
-        </div>
-    </div>
+  &-text,
+  &-textarea,
+  &-textfile,
+  &-select {
+    .input {
+      flex: 1;
+    }
 
-    <div class="form-group">
-        <label class="col-xs-2 control-label">@WebResources.TypeDemandLabel</label>
-        <div class="col-xs-10">
-            <select class="form-control" ng-options="option.id as option.libelle for option in contextes.typeDemandes" ng-model="contexte.typeDemandeId" ng-disabled="!editeContexteDemande">
-                <option value="">@WebResources.Select</option>
-            </select>
-        </div>
-    </div>
-    <div class="form-group" ng-show="contexte.metierId==2">
-        <label class="col-xs-2 control-label">@WebResources.OrigineLabel</label>
-        <div class="col-xs-10">
-            {{contexte.fromApplication}}
-        </div>
-    </div>
-    <div class="form-group" ng-show="false">
-        <label class="col-xs-2 control-label">@WebResources.NumeroDemande</label>
-        <div class="col-xs-10">
-            {{contexte.numeroDemande}}
-        </div>
-    </div>
-    <div class="form-group" ng-show="false">
-        <label class="col-xs-2 control-label">@WebResources.NumeroInstance</label>
-        <div class="col-xs-10">
-            {{contexte.numeroInstance}}
-        </div>
-    </div>
-    <div class="form-group" ng-show="false">
-        <label class="col-xs-2 control-label">@WebResources.NumeroInstanceRenseigne</label>
-        <div class="col-xs-10">
-            {{contexte.numeroInstanceRenseigne}}
-        </div>
-    </div>
-    <div class="form-group" ng-show="contexte.metierId==2 && contexte.numeroClientRc.length==0">
-        <label class="col-xs-2 control-label">@WebResources.TypeTitulaireLabel</label>
-        <div class="col-xs-10">
-            <select class="form-control" ng-options="option.code as option.libelle for option in contextes.typeTitulaires" ng-model="contexte.codeTypeTitulaire" ng-disabled="!editeContexteDemande">
-                <option value="">@WebResources.Select</option>
-            </select>
-        </div>
-    </div>
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      position: relative;
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M86.799 36.75H13.5l36.654 35.636L86.799 36.75z"/></svg>');
+      background-color: #fff;
+      background-repeat: no-repeat;
+      background-position: right 0.7em top 50%, 0 0;
+      background-size: 1.5em;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: fn.size(8) fn.size(10);
+      border: 1px solid #cccccc;
+      outline: none;
 
-    <div class="form-group">
-        <div class="col-xs-10 col-xs-push-2">
-            <a class="btn btn-primary" type="submit" ng-click="reset()" ng-show="!editeContexteDemande">@WebResources.Edit</a>
-            <button class="btn btn-primary" type="submit" ng-show="editeContexteDemande" ng-model="btnValider" ng-disabled="contexte.perimetreId == null || (contexte.garantieId == null && contextes.garanties.length >0) || contexte.typeDemandeId == null || (contexte.niveauId == 3 && contexte.idAbonne == null) || (contextes.metiers.length && contexte.metierId == null)||(contexte.metierId==2 && contexte.codeTypeTitulaire==null && contexte.numeroClientRc.length==0)">@WebResources.Valid</button><br />
-        </div>
-    </div>
+      &:focus {
+        outline: 1px solid #2a2ca9;
+      }
+    }
+  }
 
-</form>
+  &-view .input span {
+    display: block;
+    padding-top: 0.5em;
+    line-height: 1;
+  }
 
-<div ng-bind-html="tagXiti"></div>
+  &-checkbox {
+    input {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+
+      border: 1px solid #ccc;
+      background: #fff;
+      line-height: 0.9;
+      vertical-align: middle;
+      text-align: center;
+      width: 1em;
+      height: 1em;
+
+      &:focus {
+        outline: 1px solid #2a2ca9;
+      }
+
+      &:checked {
+        background-color: vars.$primary-color;
+        border-color: #3032c1;
+        color: #fff;
+      }
+
+      &::before {
+        font-size: 0.7em;
+        color: inherit;
+      }
+
+      &:checked::before {
+        @include icons.icon("ok");
+      }
+    }
+  }
+
+  &-checkbox,
+  &-radio {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    cursor: pointer;
+
+    &.af-form-item_label--left {
+      flex-direction: row;
+      justify-content: flex-start;
+    }
+
+    label,
+    input {
+      cursor: inherit;
+    }
+
+    label {
+      display: block;
+      padding-top: 0.1em;
+    }
+
+    input {
+      vertical-align: middle;
+      --size: 1em;
+      width: var(--size);
+      height: var(--size);
+    }
+
+    input + label {
+      display: inline-block;
+      margin-left: 0.4em;
+    }
+
+    .input {
+      display: flex;
+      flex-direction: row;
+    }
+  }
+
+  /** disabled increment buttons on number input */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    /* display: none; <- Crashes Chrome on hover */
+    -webkit-appearance: none;
+    margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+  }
+
+  &-item__small-label {
+    position: relative;
+    > label {
+      position: absolute;
+      font-size: 0.6em;
+      top: 0.1em;
+      left: 0.3em;
+      color: #555555;
+    }
+  }
+
+  &-item__validation-information {
+    font-size: 0.8em;
+    color: #7f7f7f;
+  }
+
+  &-item--required,
+  .label-required {
+    label {
+      &::after {
+        content: "*";
+        color: #da0000;
+        margin-left: 0.1em;
+      }
+    }
+  }
+
+  // validation error etc.
+
+  $color-error: #da0000;
+
+  &-item--invalid {
+    input,
+    textarea,
+    select {
+      border-color: vars.$color-danger-button;
+      background-color: vars.$color-danger-background;
+      color: vars.$color-danger-button;
+    }
+
+    select {
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="%23f02849"><path d="M86.799 36.75H13.5l36.654 35.636L86.799 36.75z"/></svg>');
+    }
+  }
+
+  &-item__error-message {
+    color: $color-error;
+    font-size: 0.9em;
+  }
+
+  .input-visually-hidden {
+    pointer-events: none;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    position: absolute;
+    padding: 0 !important;
+    border: none !important;
+  }
+}
+
+.af-form-item--floating-checkbox {
+  > label {
+    width: 250px;
+  }
+  .input {
+    position: relative;
+
+    input {
+      z-index: 2;
+      position: absolute;
+      left: 1em;
+      top: 1em;
+    }
+  }
+
+  &.af-item--align-label {
+    > label {
+      padding-top: 1em;
+    }
+  }
+}
