@@ -1,103 +1,113 @@
+@using AxaFrance.EDS.Resources
+@* @using System.Web.Optimization*@
 
+<h2>@WebResources.ContextTitle </h2>
+<small><em>@WebResources.MandatoryField</em></small>
+<form class="form-horizontal" ng-submit="submitContext()">
 
-.main-title {
-    background: #00008f;
-}
+    <div class="form-group" ng-if="contexte.niveauId == 3">
+        <label class="col-xs-2 control-label">@WebResources.CustomerDatas</label>
+        <div class="col-xs-10">
+            <select class="form-control" name="donnees_clients" ng-style="{'width': '320px'}" ng-options="client.idAbonne as client.informationClient for client in contexteConseiller.portefeuille.clients" ng-model="contexte.idAbonne" ng-disabled="!editeContexteDemande"></select>
+        </div>
+    </div>
+    <div class="form-group" ng-if="contexte.niveauId == 2">
+        <label class="col-xs-2 control-label">@WebResources.ContratDatas</label>
+        <div class="col-xs-10">
+            <div class="label_uneditable" ng-bind="contexteConseiller.portefeuille.clients[0].contrats[0].informationContrat"></div>
+        </div>
+    </div>
+    <div class="form-group" ng-if="contexte.niveauId == 2 && contexte.metierId == 3"> <!--Cas de la vie individuelle-->
+        <label class="col-xs-2 control-label">@WebResources.CustomerDatas</label>
+        <div class="col-xs-10">
+            <div class="label_uneditable" ng-bind="contexteConseiller.portefeuille.clients[0].informationClientVieIndividuelle"></div>
+        </div>
+    </div>
+    <div class="form-group" ng-if="contexte.niveauId == 1">
+        <label class="col-xs-2 control-label">@WebResources.SinistreDatas</label>
+        <div class="col-xs-10">
+            <div class="label_uneditable" ng-bind="contexteConseiller.portefeuille.clients[0].contrats[0].sinistres[0].informationSinistre"></div>
+        </div>
+    </div>
 
-/* Header styles */
-.header {
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 1rem 0;
-    width: 100%;
-}
-
-.header-content {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 2rem;
-}
-
-/* Logo section */
-.logo-section {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    margin-left: -1rem;
-}
-
-.logo {
-    height: 60px;
-    width: 60px;
-    background-image: url("../img/logo-axa-new.svg");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-}
-.logo-footer {
-    height: 22px;
-    width: 22px;
-    background-image: url("../img/logo-axa-new.svg");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
- 
-}
-
-.title-section h2 {
-    font-size: 2.2rem;
-    color: #000;
-    margin: 0;
-    font-weight: bold;
-}
-
-.title-section p {
-    font-size: 1.2rem;
-    color: #666;
-    margin: 0;
-}
-.user-name {
-    font-size: 1.7rem;
-    color: #333;
-    text-decoration: underline;
-    color: #000072;
-    font-weight: bold;
-}
-.af-header__subtitle {
-    line-height: 1em;
-    font-weight: 400;
-    display: block;
-    font-size: 1.375em;
-}
-
-  <header class="header">
-      <div class="header-content">
-          <div class="logo-section">
-              <div class="logo"></div>
-              <div class="title-section">
-                  <h2>@WebResources.BOTitle</h2>
-                  <div class="af-header__subtitle">Envoi de Demande au Siège</div>
-              </div>
-          </div>
-          <div class="user-name">
-              <span ng-bind='wacUser'></span>
-          </div>
-          </div>
-     
-  </header>
-
-        <!-- Footer -->
-    <footer>
-        <div class="container-fluid">
-            <div class="logo-section">
-            <div class="logo-footer"></div>
-                <span class="c-text">
-             © AXA @DateTime.Now.Year - Tous droits réservés
-               @AxaFrance.EDS.Web.Services.CommonService.GetCurrentVersion()
-            </span>
+    <div class="form-group">
+        <label class="col-xs-2 control-label" for="region">@WebResources.Perimetre </label>
+        <div class="col-xs-10">
+            <div class="radio">
+                <div class="radio-check-group" ng-repeat="perimetre in allPerimeters">
+                    <input id="{{$id}}" type="radio" name="Perimeter" value="{{perimetre.id}}" data-ng-model="contexte.perimetreId" ng-disabled="disablePerimeter(perimetre) || !editeContexteDemande" />
+                    <label for="{{$id}}" class="radio">{{ perimetre.libelle }}</label>
+                </div>
             </div>
         </div>
-    </footer> est ce quee on, peux avoir mieux qualité css et nommage class
+    </div>
+
+    <div class="form-group" ng-show="contextes.metiers.length && contexte.metierId != 3">
+        <label class="col-xs-2 control-label">@WebResources.MetierLabel</label>
+        <div class="col-xs-10">
+            <select class="form-control" ng-options="option.id as option.libelle for option in contextes.metiers" ng-model="contexte.metierId" ng-disabled="!editeContexteDemande || contexte.niveauId != 3 || initialContext.metierId">
+                <option value="">@WebResources.Select</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group" ng-show="contextes.perimetres.length == 1 && contextes.garanties.length">
+        <label class="col-xs-2 control-label">@WebResources.WarrantyUse</label>
+        <div class="col-xs-10">
+            <select class="form-control" ng-options="option.id as option.libelle for option in contextes.garanties" ng-model="contexte.garantieId" ng-disabled="!editeContexteDemande">
+                <option value="">@WebResources.Select</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-xs-2 control-label">@WebResources.TypeDemandLabel</label>
+        <div class="col-xs-10">
+            <select class="form-control" ng-options="option.id as option.libelle for option in contextes.typeDemandes" ng-model="contexte.typeDemandeId" ng-disabled="!editeContexteDemande">
+                <option value="">@WebResources.Select</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group" ng-show="contexte.metierId==2">
+        <label class="col-xs-2 control-label">@WebResources.OrigineLabel</label>
+        <div class="col-xs-10">
+            {{contexte.fromApplication}}
+        </div>
+    </div>
+    <div class="form-group" ng-show="false">
+        <label class="col-xs-2 control-label">@WebResources.NumeroDemande</label>
+        <div class="col-xs-10">
+            {{contexte.numeroDemande}}
+        </div>
+    </div>
+    <div class="form-group" ng-show="false">
+        <label class="col-xs-2 control-label">@WebResources.NumeroInstance</label>
+        <div class="col-xs-10">
+            {{contexte.numeroInstance}}
+        </div>
+    </div>
+    <div class="form-group" ng-show="false">
+        <label class="col-xs-2 control-label">@WebResources.NumeroInstanceRenseigne</label>
+        <div class="col-xs-10">
+            {{contexte.numeroInstanceRenseigne}}
+        </div>
+    </div>
+    <div class="form-group" ng-show="contexte.metierId==2 && contexte.numeroClientRc.length==0">
+        <label class="col-xs-2 control-label">@WebResources.TypeTitulaireLabel</label>
+        <div class="col-xs-10">
+            <select class="form-control" ng-options="option.code as option.libelle for option in contextes.typeTitulaires" ng-model="contexte.codeTypeTitulaire" ng-disabled="!editeContexteDemande">
+                <option value="">@WebResources.Select</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-xs-10 col-xs-push-2">
+            <a class="btn btn-primary" type="submit" ng-click="reset()" ng-show="!editeContexteDemande">@WebResources.Edit</a>
+            <button class="btn btn-primary" type="submit" ng-show="editeContexteDemande" ng-model="btnValider" ng-disabled="contexte.perimetreId == null || (contexte.garantieId == null && contextes.garanties.length >0) || contexte.typeDemandeId == null || (contexte.niveauId == 3 && contexte.idAbonne == null) || (contextes.metiers.length && contexte.metierId == null)||(contexte.metierId==2 && contexte.codeTypeTitulaire==null && contexte.numeroClientRc.length==0)">@WebResources.Valid</button><br />
+        </div>
+    </div>
+
+</form>
+
+<div ng-bind-html="tagXiti"></div>
