@@ -1,3 +1,9 @@
+   @Override
+    public Page<Log> findAllByCriteria(LogSearchSpecificationInfo specificationInfo,Pageable pageable) {
+        var s=buildSpecification(specificationInfo);
+        return logRepository.findAll(buildSpecification(specificationInfo), pageable);
+    }
+
 package fr.axa.pfel.console.logs.impl;
 
 import fr.axa.pfel.console.*;
@@ -74,6 +80,7 @@ package fr.axa.pfel.console.criteria.log;
 
 import fr.axa.pfel.console.Log;
 import fr.axa.pfel.console.Log_;
+import fr.axa.pfel.console.criteria.CaseMode;
 import fr.axa.pfel.console.criteria.Criteria;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -93,17 +100,11 @@ public class LogNumContractCriteria extends Criteria<Log> {
     @Override
     public Predicate toPredicate(Root<Log> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
         if (numContract != null && !numContract.isBlank()) {
-            return likeLower(criteriaBuilder, root.get(Log_.numContract), numContract);
+            return like(criteriaBuilder, root.get(Log_.numContract), numContract, CaseMode.LOWER);
         }
         return query.getRestriction();
     }
 }
-
-
-    protected Predicate likeLower(CriteriaBuilder criteriaBuilder, Path<String> attribute,
-                             String value) {
-        return criteriaBuilder.like(criteriaBuilder.lower(attribute), getLikeValue(value));
-    }
 
 package fr.axa.pfel.console.criteria;
 
@@ -116,21 +117,18 @@ import java.util.List;
 
 public abstract class Criteria<T> implements Specification<T> {
 
+
     protected String getLikeValue(String value) {
-        return "%" + value.toUpperCase() + "%";
+        return "%" + value + "%";
     }
 
-
-    protected Predicate like(CriteriaBuilder criteriaBuilder, Path<String> attribute,
-        String value) {
-        return criteriaBuilder.like(criteriaBuilder.upper(attribute), getLikeValue(value));
+    protected Predicate like(CriteriaBuilder cb, Path<String> path, String value, CaseMode caseMode) {
+        return switch (caseMode) {
+            case LOWER -> cb.like(cb.lower(path), getLikeValue(value.toLowerCase()));
+            case UPPER -> cb.like(cb.upper(path), getLikeValue(value.toUpperCase()));
+            default -> cb.like(path, getLikeValue(value));
+        };
     }
-
-    protected Predicate likeLower(CriteriaBuilder criteriaBuilder, Path<String> attribute,
-                             String value) {
-        return criteriaBuilder.like(criteriaBuilder.lower(attribute), getLikeValue(value));
-    }
-
     protected Predicate likeIn(CriteriaBuilder criteriaBuilder, Path<String> attribute, List<String> value) {
         return criteriaBuilder.upper(attribute).in(value.stream().map(String::toUpperCase).toList());
     }
