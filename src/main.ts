@@ -1,268 +1,169 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { ChangeEvent, ForwardedRef, useMemo, useState } from "react";
-import { useQuery } from "react-query";
-import { Typeahead } from "react-bootstrap-typeahead";
-import {
-  CheckboxInput,
-  CustomInputDate,
-  InputSelect,
-} from "@/components/atoms";
-import actionStore from "@/stores/actions/actionsStore";
-import { getActions } from "@/api/apifunctions/action/actions";
-import { getLogsApp } from "@/api/apifunctions/application/application";
-import applicationsLogStore from "@/stores/applications/applicationsLogStore";
+package fr.axa.pfel.console.controllers;
 
-import { App, searchParams } from "@/types/logs";
-import { TextInput } from "@axa-fr/react-toolkit-form-input-text";
-import "./search.scss";
-import { getTemplates } from "@/api/apifunctions/logs/logs";
-interface TemplateOption {
-  id: number;
-  template: string;
+import fr.axa.pfel.console.TemplateDTO;
+import fr.axa.pfel.console.logs.ITemplateService;
+import fr.axa.pfel.console.swaggers.ITemplateApi;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+public class TemplateController implements ITemplateApi {
+
+    private final ITemplateService templateService;
+
+    public TemplateController(ITemplateService templateService) {
+        this.templateService = templateService;
+    }
+
+
+    @Override
+    public List<TemplateDTO> getTemplates(String term) {
+        return templateService.searchLogTemplates(term);
+    }
+
+
+
+    public Optional<TemplateDTO> getTemplateById(Long id) {
+        return templateService.getTemplateById(id);
+    }
 }
-interface childComponentProps {
-  onData: (data: searchParams) => void;
-  initialData: searchParams | null;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+
+package fr.axa.pfel.console.swaggers;
+
+import fr.axa.pfel.console.TemplateDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+import java.util.Optional;
+
+@Tag(name = "Template", description = "Récupère les Template ")
+public interface ITemplateApi extends ApiV1 {
+
+    @Operation(summary = "Récupère la liste des templates", tags = {"Actions"})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Récupération des templates réussie"),
+            @ApiResponse(responseCode = "400", description = "Erreur de validation de la requête"),
+            @ApiResponse(responseCode = "500", description = "Erreur interne")}
+    )
+    @GetMapping("/templates")
+    List<TemplateDTO> getTemplates(@RequestParam String term);
+
+
+    @Operation(summary = "Récupère la templates", tags = {"Template_Logs"})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Récupération de la template réussie"),
+            @ApiResponse(responseCode = "400", description = "Erreur de validation de la requête"),
+            @ApiResponse(responseCode = "500", description = "Erreur interne")}
+    )
+    @GetMapping("/template/{id}")
+    Optional<TemplateDTO> getTemplateById(@PathVariable Long id);
+
 }
-export const SearchForm = React.forwardRef<
-  HTMLFormElement,
-  childComponentProps
->(({ initialData, onData, onSubmit }, ref: ForwardedRef<HTMLFormElement>) => {
-  const [formData, setFormData] = useState({
-    action: initialData?.action || "",
-    requestId: initialData?.requestId || "",
-    userName: initialData?.userName || "",
-    portfolio: initialData?.portfolio || "",
-    numContract: initialData?.numContract || "",
-    app: initialData?.app || { applicationName: "", id: 0 },
-    templateId: initialData?.templateId || null,
-    isError: initialData?.isError || false,
-    startDate: initialData?.startDate ? new Date(initialData.startDate) : null,
-    endDate: initialData?.endDate ? new Date(initialData.endDate) : null,
-  });
-  const { actions, setActions } = actionStore();
-  const { applications, setApplications } = applicationsLogStore();
-  // Récupération des actions
-  useQuery("action", () => getActions(), {
-    onSuccess({ successData }) {
-      setActions(successData);
-    },
-    onError: () => {},
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
-  });
-  // Récupération des applications
-  useQuery("application", () => getLogsApp(), {
-    onSuccess({ successData }) {
-      setApplications(successData);
-    },
-    onError: () => {},
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
-  });
-  // State pour gérer la saisie du template (recherche)
-  const [queryTemplate, setQueryTemplate] = useState("");
-  const { data: templatesData, isFetching } = useQuery(
-    ["templates", queryTemplate],
-    () => getTemplates(queryTemplate),
-    {
-      enabled: queryTemplate.length >= 2,
-      refetchOnWindowFocus: false,
+
+
+package fr.axa.pfel.console.logs;
+
+
+import fr.axa.pfel.console.TemplateDTO;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface ITemplateService {
+
+    List<TemplateDTO> searchLogTemplates(String term);
+    Optional<TemplateDTO> getTemplateById(Long id);
+
+}
+
+package fr.axa.pfel.console.logs.impl;
+
+import fr.axa.pfel.console.ITemplateRepository;
+import fr.axa.pfel.console.TemplateDTO;
+import fr.axa.pfel.console.logs.ITemplateService;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class TemplateService implements ITemplateService {
+
+    private final ITemplateRepository templateRepository;
+
+    public TemplateService(ITemplateRepository templateRepository) {
+        this.templateRepository = templateRepository;
     }
-  );
-  const templateOptions: TemplateOption[] = templatesData?.successData || [];
-  const excludeDateIntervals = useMemo(() => {
-    const exclude: {
-      start: { start: Date; end: Date }[];
-      end: { start: Date; end: Date }[];
-    } = {
-      start: [],
-      end: [],
-    };
-    if (formData?.startDate) {
-      const maxEndDate = new Date(formData?.startDate);
-      maxEndDate.setDate(maxEndDate.getDate() - 1);
-      exclude.end.push({ start: new Date(0), end: maxEndDate });
+
+    @Override
+    public List<TemplateDTO> searchLogTemplates(String term) {
+        return templateRepository.findTemplates(term);
     }
-    const tomorrowBlock = { start: new Date(), end: new Date("9999-12-31") };
-    exclude.start.push(tomorrowBlock);
-    exclude.end.push(tomorrowBlock);
-    return exclude;
-  }, [formData?.startDate]);
-  // Gérer la soumission du formulaire
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    onData(formData as any);
-    onSubmit(e);
-  };
-  console.log(initialData, "initialData");
-  // Gestion changement de select application
-  const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const selectedApp = applications.find(
-      (applications: App) => applications.id === parseInt(e.target.value)
-    );
-    if (selectedApp) {
-      setFormData({
-        ...formData,
-        app: { applicationName: selectedApp.appName, id: selectedApp.id },
-      });
+
+    @Override
+    public Optional<TemplateDTO> getTemplateById(Long id) {
+        var t= templateRepository.findById(id);
+        return t.map(log -> TemplateDTO.builder()
+                .template(log.getTemplate())
+                .id(log.getId()).build());
+
     }
-  };
-  // Pour afficher dans le Typeahead l'option sélectionnée à partir de l'id
-  const selectedTemplateOption = templateOptions.filter(
-    (opt) => opt.id === formData.templateId
-  );
-  return (
-    <form onSubmit={handleSubmit} ref={ref}>
-      <div className="form-content">
-        <InputSelect
-          id="select-action"
-          name="action"
-          classNameContainerLabel="col-md-3 p-2"
-          classNameContainerInput="col-md-9 align-input"
-          options={actions}
-          label="Action"
-          value={formData.action}
-          placeHolderOption="Toutes"
-          onChange={(e) => setFormData({ ...formData, action: e.target.value })}
-        />
-        <InputSelect
-          id="select-logApp"
-          name="logsApp"
-          classNameContainerLabel="col-md-3 p-2 "
-          classNameContainerInput="col-md-9 align-input"
-          options={applications}
-          value={formData.app.id}
-          placeHolderOption="Toutes"
-          onChange={handleSelectChange}
-          label="Application"
-        />
-        <div className="row align-input">
-          <label className="col-md-3 p-2">Date </label>
-          <div className="col-md-9 align-section-date">
-            <span className="align-text-start-date"> du </span>
-            <div>
-              <CustomInputDate
-                name="startDate"
-                id="startDate"
-                dateValue={formData.startDate}
-                excludeDateIntervals={excludeDateIntervals.start}
-                onChange={(date: Date | null) =>
-                  setFormData({ ...formData, startDate: date ? date : null })
-                }
-              />
-            </div>
-            <span className="align-text"> au </span>
-            <div>
-              <CustomInputDate
-                name="endDate"
-                id="endDate"
-                dateValue={formData.endDate}
-                excludeDateIntervals={excludeDateIntervals.end}
-                onChange={(date: Date | null) =>
-                  setFormData({ ...formData, endDate: date ? date : null })
-                }
-              />
-            </div>
-          </div>
-        </div>
-        <TextInput
-          id="input-reqID"
-          data-testid="input-reqID"
-          classModifier="form-control"
-          key="reqID"
-          name="reqID"
-          classNameContainerLabel="col-md-3 p-2 "
-          classNameContainerInput="col-md-9"
-          value={formData.requestId}
-          label="Request Id"
-          onChange={(e) => setFormData({ ...formData, requestId: e.value })}
-        />
-        <TextInput
-          id="input-username"
-          data-testid="input-username"
-          classModifier="form-control search-form"
-          key="username"
-          name="Username"
-          classNameContainerLabel="col-md-3"
-          classNameContainerInput="col-md-9"
-          value={formData.userName}
-          label="User"
-          onChange={(e) => setFormData({ ...formData, userName: e.value })}
-        />
-        <TextInput
-          id="input-portfolio"
-          data-testid="input-portfolio"
-          classModifier="form-control search-form"
-          key="portfolio"
-          name="portfolio"
-          classNameContainerLabel="col-md-3"
-          classNameContainerInput="col-md-9"
-          value={formData.portfolio}
-          label="Portfolio"
-          onChange={(e) => setFormData({ ...formData, portfolio: e.value })}
-        />
-        <TextInput
-          id="input-numContract"
-          data-testid="input-numContract"
-          classModifier="form-control search-form"
-          key="numContract"
-          name="numContract"
-          classNameContainerLabel="col-md-3"
-          classNameContainerInput="col-md-9"
-          value={formData.numContract}
-          label="N° de Contrat"
-          onChange={(e) => setFormData({ ...formData, numContract: e.value })}
-        />
-        {/* Remplacement du TextInput template par Typeahead */}
-        <div className="form-group row align-input">
-          <label
-            htmlFor="typeahead-template"
-            className="col-md-3 col-form-label p-2"
-          >
-            Template
-          </label>
-          <div className="col-md-9">
-            <Typeahead
-              id="typeahead-template"
-              labelKey="template"
-              options={templateOptions}
-              placeholder="Choisir un template..."
-              selected={selectedTemplateOption}
-              onInputChange={(text) => {
-                setQueryTemplate(text);
-                if (text.length < 2) {
-                  setFormData({ ...formData, templateId: 0 });
-                }
-              }}
-              onChange={(selected) => {
-                if (selected.length > 0) {
-                  setFormData({
-                    ...formData,
-                    templateId: (selected[0] as TemplateOption).id,
-                  });
-                } else {
-                  setFormData({ ...formData, templateId: 0 });
-                }
-              }}
-              clearButton
-              isLoading={isFetching}
-              minLength={2}
-              inputProps={{ name: "template" }}
-            />
-          </div>
-        </div>
-      </div>
-      <CheckboxInput
-        label="Afficher seulement les erreurs"
-        checked={formData.isError}
-        onChange={(e) =>
-          setFormData({ ...formData, isError: e.target.checked })
-        }
-        name="isError"
-        id="errorCheckbox"
-      />
-    </form>
-  );
-});
+}
+package fr.axa.pfel.console;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+
+public interface ITemplateRepository extends JpaRepository<LogTemplate, Long> {
+    @Query("SELECT new fr.axa.pfel.console.TemplateDTO(l.id, l.template) " +
+            "FROM LogTemplate l WHERE LOWER(l.template) LIKE LOWER(CONCAT('%', :term, '%'))")
+    List<TemplateDTO> findTemplates(@Param("term") String term);
+}
+
+
+
+package fr.axa.pfel.console;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Entity
+@Getter @Setter
+@Table(name = "T_LOGS_TEMPLATE")
+public class LogTemplate {
+    @Id
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "LOGS_APPLICATION_ID", referencedColumnName = "ID", nullable = false)
+    private LogApplication logApplication;
+
+    @Column(name = "TEMPLATE")
+    private String template;
+
+}
+
+voci url 
+http://localhost:8082/consolepfel/api/v1/template/test?id=55
+
+
+retour {
+  "type": "about:blank",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "No static resource api/v1/template/test.",
+  "instance": "/consolepfel/api/v1/template/test",
+  "properties": null
+}
