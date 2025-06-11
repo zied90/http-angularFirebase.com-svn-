@@ -1,14 +1,27 @@
-Type '(motCle: string | null) => Promise<any> | undefined' is not assignable to type '(query: string) => Promise<{ successData: TemplateOption[]; }>'.
-  Type 'Promise<any> | undefined' is not assignable to type 'Promise<{ successData: TemplateOption[]; }>'.
-    Type 'undefined' is not assignable to type 'Promise<{ successData: TemplateOption[]; }>'.ts(2322)
-index.tsx(9, 2): The expected type comes from property 'onSearch' which is declared here on type 'IntrinsicAttributes & AutocompleteProps<TemplateOption>'
-(property) AutocompleteProps<TemplateOption>.onSearch: (query: string) => Promise<{
-    successData: TemplateOption[];
-}> onSearch={getTemplates}
-
-
-  et oiur info voci export function getTemplates(motCle: string | null) {
-  if (motCle) {
-    return ApiHandler(`/templates?term=${motCle}`, {}, "GET");
-  }
-}
+    <Typeahead
+              id="typeahead-template"
+              labelKey="template"
+              options={allOptions}
+              placeholder="Choisir un template..."
+              selected={selectedTemplateOption}
+              onInputChange={(text) => {
+                setQueryTemplate(text);
+                if (text.length < 2) {
+                  setFormData({ ...formData, templateId: null });
+                }
+              }}
+              onChange={(selected) => {
+                if (selected.length > 0) {
+                  setFormData({
+                    ...formData,
+                    templateId: (selected[0] as TemplateOption).id,
+                  });
+                } else {
+                  setFormData({ ...formData, templateId: null });
+                }
+              }}
+              clearButton
+              isLoading={isFetching}
+              minLength={2}
+              inputProps={{ name: "template" }}
+            />
