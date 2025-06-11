@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { useQuery } from "react-query";
-import { Typeahead } from "react-bootstrap-typeahead";
+
 import {
   Autocomplete,
   CheckboxInput,
@@ -239,7 +239,7 @@ export const SearchForm = React.forwardRef<
           onChange={(e) => setFormData({ ...formData, numContract: e.value })}
         />
         {/* Typeahead Template */}
-  {/*       <div className="form-group row align-input">
+        {/*       <div className="form-group row align-input">
           <label
             htmlFor="typeahead-template"
             className="col-md-3 col-form-label p-2"
@@ -277,20 +277,44 @@ export const SearchForm = React.forwardRef<
           </div>
         </div> */}
         <Autocomplete
-     id="template-autocomplete"
-     name="template"
-     label="Template"
-     placeholder="Choisir un template..."
-     classNameContainer="row align-input"
-     classNameLabel="col-md-3 p-2"
-     classNameInput="col-md-9"
-     options={options}
-     selected={selected}
-     onChange={setSelected}
-     onInputChange={(query) => {
-       console.log("Recherche :", query);
-     }}
-   />
+          id="template-autocomplete"
+          name="template"
+          label="Template"
+          placeholder="Choisir un template..."
+          classNameContainer="row align-input"
+          classNameLabel="col-md-3 p-2"
+          classNameInput="col-md-9"
+          options={allOptions.map((opt) => ({
+            label: opt.template,
+            value: opt.id,
+          }))}
+          selected={
+            formData.templateId
+              ? [
+                  {
+                    label: selectedTemplateOption[0]?.template || "",
+                    value: formData.templateId,
+                  },
+                ]
+              : []
+          }
+          onChange={(selected) => {
+            if (selected.length > 0) {
+              setFormData({
+                ...formData,
+                templateId: selected[0].id,
+              });
+            } else {
+              setFormData({ ...formData, templateId: null });
+            }
+          }}
+          onInputChange={(query) => {
+            setQueryTemplate(query);
+            if (query.length < 2) {
+              setFormData({ ...formData, templateId: null });
+            }
+          }}
+        />
       </div>
       <CheckboxInput
         label="Afficher seulement les erreurs"
@@ -304,3 +328,74 @@ export const SearchForm = React.forwardRef<
     </form>
   );
 });
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React from "react";
+import { Typeahead } from "react-bootstrap-typeahead";
+import "react-bootstrap-typeahead/css/Typeahead.css";
+
+export interface AutocompleteOption {
+  id: number;
+  label: string;
+}
+interface AutocompleteProps {
+  id: string;
+  name?: string;
+  label: string;
+  placeholder?: string;
+  classNameContainer?: string;
+  classNameLabel?: string;
+  classNameInput?: string;
+  options: AutocompleteOption[];
+  selected: AutocompleteOption[];
+  onChange: (selected: AutocompleteOption[]) => void;
+  onInputChange?: (query: string) => void;
+  isLoading?: boolean;
+  clearButton?: boolean;
+  minLength?: number;
+}
+export const Autocomplete: React.FC<AutocompleteProps> = ({
+  id,
+  name,
+  label,
+  placeholder = "Choisir une option...",
+  classNameContainer = "",
+  classNameLabel = "",
+  classNameInput = "",
+  options,
+  selected,
+  onChange,
+  onInputChange,
+  isLoading = false,
+  clearButton = true,
+  minLength = 2,
+}) => {
+  return (
+    <div className={`form-group row ${classNameContainer}`}>
+      <label htmlFor={id} className={`col-form-label ${classNameLabel}`}>
+        {label}
+      </label>
+      <div className={classNameInput}>
+        <Typeahead
+          id={id}
+          labelKey="label"
+          options={options}
+          selected={selected}
+          onChange={(selected) =>
+            onChange(
+              selected.filter(
+                (item): item is AutocompleteOption =>
+                  typeof item === "object" && "id" in item && "label" in item
+              )
+            )
+          }
+          onInputChange={onInputChange}
+          placeholder={placeholder}
+          isLoading={isLoading}
+          clearButton={clearButton}
+          minLength={minLength}
+          inputProps={{ name: name || id }}
+        />
+      </div>
+    </div>
+  );
+};
