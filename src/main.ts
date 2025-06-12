@@ -304,3 +304,6 @@ export const SearchForm = React.forwardRef<
     </form>
   );
 });
+
+The 'templateOptions' logical expression could make the dependencies of useMemo Hook (at line 106) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'templateOptions' in its own useMemo() Hook.eslintreact-hooks/exhaustive-deps
+interface TemplateOption   =>  const templateOptions: TemplateOption[] = templatesData?.successData || [];
