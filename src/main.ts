@@ -9,7 +9,7 @@ import React, {
 import { useQuery } from "react-query";
 import { Typeahead } from "react-bootstrap-typeahead";
 import {
-  Autocomplete,
+  // Autocomplete,
   CheckboxInput,
   CustomInputDate,
   InputSelect,
@@ -273,10 +273,10 @@ export const SearchForm = React.forwardRef<
               }}
               clearButton
               isLoading={isFetching}
-              minLength={2}
+              minLength={1}
               inputProps={{
                 name: "template",
-           
+                className: "template-design",
               }}
             />
             {/*    <Autocomplete<TemplateOption>
