@@ -1,309 +1,45 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, {
-  ChangeEvent,
-  ForwardedRef,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { useQuery } from "react-query";
-import { Typeahead } from "react-bootstrap-typeahead";
-import {
-  // Autocomplete,
-  CheckboxInput,
-  CustomInputDate,
-  InputSelect,
-} from "@/components/atoms";
-import actionStore from "@/stores/actions/actionsStore";
-import { getActions } from "@/api/apifunctions/action/actions";
-import { getLogsApp } from "@/api/apifunctions/application/application";
-import applicationsLogStore from "@/stores/applications/applicationsLogStore";
-import { getTemplates } from "@/api/apifunctions/logs/logs";
-import { App, searchParams } from "@/types/logs";
-import { TextInput } from "@axa-fr/react-toolkit-form-input-text";
-
-import "./search.scss";
-import templateStore from "@/stores/logs/templateStore";
-interface TemplateOption {
-  id: number;
-  template: string;
-}
-interface childComponentProps {
-  onData: (data: searchParams) => void;
-  initialData: searchParams | null;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-}
-export const SearchForm = React.forwardRef<
-  HTMLFormElement,
-  childComponentProps
->(({ initialData, onData, onSubmit }, ref: ForwardedRef<HTMLFormElement>) => {
-  const [formData, setFormData] = useState({
-    action: initialData?.action || "",
-    requestId: initialData?.requestId || "",
-    userName: initialData?.userName || "",
-    portfolio: initialData?.portfolio || "",
-    numContract: initialData?.numContract || "",
-    app: initialData?.app || { applicationName: "", id: 0 },
-    templateId: initialData?.templateId || null,
-    isError: initialData?.isError || false,
-    startDate: initialData?.startDate ? new Date(initialData.startDate) : null,
-    endDate: initialData?.endDate ? new Date(initialData.endDate) : null,
-  });
-  const { actions, setActions } = actionStore();
-  const { applications, setApplications } = applicationsLogStore();
-  const { setTemplates, getTemplateById } = templateStore();
-  const [queryTemplate, setQueryTemplate] = useState("");
-  const [initialTemplate, setInitialTemplate] = useState<TemplateOption | null>(
-    null
-  );
-  // Fetch actions
-  useQuery("action", () => getActions(), {
-    onSuccess({ successData }) {
-      setActions(successData);
-    },
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
-  });
-  // Fetch applications
-  useQuery("application", () => getLogsApp(), {
-    onSuccess({ successData }) {
-      setApplications(successData);
-    },
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
-  });
-  // Fetch templates by search input
-  const { data: templatesData, isFetching } = useQuery(
-    ["templates", queryTemplate],
-    () => getTemplates(queryTemplate),
-    {
-      enabled: queryTemplate.length >= 2,
-      refetchOnWindowFocus: false,
-      onSuccess({ successData }) {
-        setTemplates(successData); // Mise à jour du store Zustand
-      },
-    }
-  );
-  // Utilise Zustand pour récupérer le template initial par ID
-  useEffect(() => {
-    if (initialData?.templateId && !initialTemplate) {
-      const found = getTemplateById(initialData.templateId);
-      console.log(found, "found");
-      if (found) {
-        setInitialTemplate(found);
-        setFormData((prev) => ({ ...prev, templateId: found.id }));
-      }
-    }
-  }, [initialData?.templateId, initialTemplate, getTemplateById]);
-  const templateOptions: TemplateOption[] = templatesData?.successData || [];
-  const allOptions = useMemo(() => {
-    const map = new Map();
-    (initialTemplate
-      ? [initialTemplate, ...templateOptions]
-      : templateOptions
-    ).forEach((tpl) => map.set(tpl.id, tpl));
-    return Array.from(map.values());
-  }, [initialTemplate, templateOptions]);
-  const selectedTemplateOption = allOptions.filter(
-    (opt) => opt.id === formData.templateId
-  );
-  const excludeDateIntervals = useMemo(() => {
-    const exclude = { start: [], end: [] } as {
-      start: { start: Date; end: Date }[];
-      end: { start: Date; end: Date }[];
-    };
-    if (formData.startDate) {
-      const maxEndDate = new Date(formData.startDate);
-      maxEndDate.setDate(maxEndDate.getDate() - 1);
-      exclude.end.push({ start: new Date(0), end: maxEndDate });
-    }
-    const tomorrowBlock = { start: new Date(), end: new Date("9999-12-31") };
-    exclude.start.push(tomorrowBlock);
-    exclude.end.push(tomorrowBlock);
-    return exclude;
-  }, [formData.startDate]);
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    onData(formData as any);
-    onSubmit(e);
-  };
-  const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const selectedApp = applications.find(
-      (app: App) => app.id === parseInt(e.target.value)
-    );
-    if (selectedApp) {
-      setFormData({
-        ...formData,
-        app: { applicationName: selectedApp.appName, id: selectedApp.id },
-      });
-    }
-  };
-  return (
-    <form onSubmit={handleSubmit} ref={ref}>
-      <div className="form-content">
-        <InputSelect
-          id="select-action"
-          name="action"
-          classNameContainerLabel="col-md-3 p-2"
-          classNameContainerInput="col-md-9 align-input"
-          options={actions}
-          label="Action"
-          value={formData.action}
-          placeHolderOption="Toutes"
-          onChange={(e) => setFormData({ ...formData, action: e.target.value })}
-        />
-        <InputSelect
-          id="select-logApp"
-          name="logsApp"
-          classNameContainerLabel="col-md-3 p-2"
-          classNameContainerInput="col-md-9 align-input"
-          options={applications}
-          value={formData.app.id}
-          placeHolderOption="Toutes"
-          onChange={handleSelectChange}
-          label="Application"
-        />
-        <div className="row align-input">
-          <label className="col-md-3 p-2">Date </label>
-          <div className="col-md-9 align-section-date">
-            <span className="align-text-start-date"> du </span>
-            <div>
-              <CustomInputDate
-                name="startDate"
-                id="startDate"
-                dateValue={formData.startDate}
-                excludeDateIntervals={excludeDateIntervals.start}
-                onChange={(date) =>
-                  setFormData({ ...formData, startDate: date || null })
-                }
-              />
-            </div>
-            <span className="align-text"> au </span>
-            <div>
-              <CustomInputDate
-                name="endDate"
-                id="endDate"
-                dateValue={formData.endDate}
-                excludeDateIntervals={excludeDateIntervals.end}
-                onChange={(date) =>
-                  setFormData({ ...formData, endDate: date || null })
-                }
-              />
-            </div>
-          </div>
-        </div>
-        <TextInput
-          id="input-reqID"
-          data-testid="input-reqID"
-          classModifier="form-control"
-          key="reqID"
-          name="reqID"
-          classNameContainerLabel="col-md-3 p-2 "
-          classNameContainerInput="col-md-9"
-          value={formData.requestId}
-          label="Request Id"
-          onChange={(e) => setFormData({ ...formData, requestId: e.value })}
-        />
-        <TextInput
-          id="input-username"
-          data-testid="input-username"
-          classModifier="form-control search-form"
-          key="username"
-          name="Username"
-          classNameContainerLabel="col-md-3"
-          classNameContainerInput="col-md-9"
-          value={formData.userName}
-          label="User"
-          onChange={(e) => setFormData({ ...formData, userName: e.value })}
-        />
-        <TextInput
-          id="input-portfolio"
-          data-testid="input-portfolio"
-          classModifier="form-control search-form"
-          key="portfolio"
-          name="portfolio"
-          classNameContainerLabel="col-md-3"
-          classNameContainerInput="col-md-9"
-          value={formData.portfolio}
-          label="Portfolio"
-          onChange={(e) => setFormData({ ...formData, portfolio: e.value })}
-        />
-        <TextInput
-          id="input-numContract"
-          data-testid="input-numContract"
-          classModifier="form-control search-form"
-          key="numContract"
-          name="numContract"
-          classNameContainerLabel="col-md-3"
-          classNameContainerInput="col-md-9"
-          value={formData.numContract}
-          label="N° de Contrat"
-          onChange={(e) => setFormData({ ...formData, numContract: e.value })}
-        />
-        {/* Typeahead Template */}
-        <div className="form-group row align-input">
-          <label
-            htmlFor="typeahead-template"
-            className="col-md-3 col-form-label p-2"
-          >
-            Template
-          </label>
-          <div className="col-md-9">
-            <Typeahead
-              id="typeahead-template"
-              labelKey="template"
-              options={allOptions}
-              placeholder="Choisir un template..."
-              selected={selectedTemplateOption}
-              onInputChange={(text) => {
-                setQueryTemplate(text);
-                if (text.length < 2) {
-                  setFormData({ ...formData, templateId: null });
-                }
-              }}
-              onChange={(selected) => {
-                if (selected.length > 0) {
-                  setFormData({
-                    ...formData,
-                    templateId: (selected[0] as TemplateOption).id,
-                  });
-                } else {
-                  setFormData({ ...formData, templateId: null });
-                }
-              }}
-              clearButton
-              isLoading={isFetching}
-              minLength={1}
-              inputProps={{
-                name: "template",
-                className: "template-design",
-              }}
-            />
-            {/*    <Autocomplete<TemplateOption>
-              id="typeahead-template"
-              labelKey="template"
-              selectedId={formData.templateId}
-              onSelectedIdChange={(id) =>
-                setFormData({ ...formData, templateId: id ?? 0 })
-              }
-              onSearch={getTemplates}
-              initialOption={initialTemplate}
-            /> */}
-          </div>
-        </div>
-      </div>
-      <CheckboxInput
-        label="Afficher seulement les erreurs"
-        checked={formData.isError}
-        onChange={(e) =>
-          setFormData({ ...formData, isError: e.target.checked })
-        }
-        name="isError"
-        id="errorCheckbox"
-      />
-    </form>
-  );
-});
-
-The 'templateOptions' logical expression could make the dependencies of useMemo Hook (at line 106) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'templateOptions' in its own useMemo() Hook.eslintreact-hooks/exhaustive-deps
-interface TemplateOption   =>  const templateOptions: TemplateOption[] = templatesData?.successData || [];
+Trying to pull ***.azurecr.io/factory/build/linux/node:18-ubi9...
+Getting image source signatures
+Copying blob sha256:c45cb5216bf7cb492daf0f5f75bd5b6efe4b9078b81dca5101d6cb8fdc12f4db
+Copying blob sha256:d84eb033f2d589e2b4180ce9117ad4400bc315ee08d69e78ff4010622b615163
+Copying blob sha256:eaa15b97d123a5c72c53d4c7ea0cc41163c40bd54f6830da4d1a6de0555550d1
+Copying blob sha256:c45cb5216bf7cb492daf0f5f75bd5b6efe4b9078b81dca5101d6cb8fdc12f4db
+Copying blob sha256:eaa15b97d123a5c72c53d4c7ea0cc41163c40bd54f6830da4d1a6de0555550d1
+Copying blob sha256:d84eb033f2d589e2b4180ce9117ad4400bc315ee08d69e78ff4010622b615163
+Copying config sha256:1ecc373bf004d5fc56e0f187e9cbf9bc843647020acbf0b0b9309d02d1e3eb3a
+Writing manifest to image destination
+Storing signatures
+[1/2] STEP 2/6: WORKDIR ${APP_ROOT}
+[1/2] STEP 3/6: COPY --chown=${USER} ["./package*.json", "./"]
+[1/2] STEP 4/6: RUN npm ci
+npm warn reify invalid or damaged lockfile detected
+npm warn reify please re-try this operation once it completes
+npm warn reify so that the damage can be corrected, or perform
+npm warn reify a fresh install with no lockfile if the problem persists.
+npm error code 1
+npm error path /opt/app-root/node_modules/sharp
+npm error command failed
+npm error command sh -c (node install/libvips && node install/dll-copy && prebuild-install) || (node install/can-compile && node-gyp rebuild && node install/dll-copy)
+npm error sharp: Downloading https://github.com/lovell/sharp-libvips/releases/download/v8.13.3/libvips-8.13.3-linux-x64.tar.br
+npm error sharp: Via proxy http:://10.142.22.37:8080 no credentials
+npm error sharp: Integrity check passed for linux-x64
+npm error prebuild-install warn install tunneling socket could not be established, statusCode=403
+npm error gyp info it worked if it ends with ok
+npm error gyp info using node-gyp@8.4.1
+npm error gyp info using node@18.20.6 | linux | x64
+npm error gyp info find Python using Python version 3.9.21 found at "/usr/bin/python3"
+npm error gyp http GET https://nodejs.org/download/release/v18.20.6/node-v18.20.6-headers.tar.gz
+npm error gyp http 200 https://nodejs.org/download/release/v18.20.6/node-v18.20.6-headers.tar.gz
+npm error gyp http GET https://nodejs.org/download/release/v18.20.6/SHASUMS256.txt
+npm error gyp http 200 https://nodejs.org/download/release/v18.20.6/SHASUMS256.txt
+npm error gyp info spawn /usr/bin/python3
+npm error gyp info spawn args [
+npm error gyp info spawn args   '/opt/app-root/node_modules/node-gyp/gyp/gyp_main.py',
+npm error gyp info spawn args   'binding.gyp',
+npm error gyp info spawn args   '-f',
+npm error gyp info spawn args   'make',
+npm error gyp info spawn args   '-I',
+npm error gyp info spawn args   '/opt/app-root/node_modules/sharp/build/config.gypi',
+npm error gyp info spawn args   '-I',
+npm error gyp info spawn args   '/opt/app-root/node_modules/node-gyp/addon.gypi',
+npm error gyp info spawn args   '-I',
