@@ -1,16 +1,1 @@
-   .radiocheck-custom .radio-inline input[type="radio"]:checked + label, .radiocheck-custom .radio-inline input[type="checkbox"]:checked + label, .radiocheck-custom .checkbox-inline input[type="radio"]:checked + label, .radiocheck-custom .checkbox-inline input[type="checkbox"]:checked + label {
-     color: #fff;
-     background: #004893;
-     box-shadow: inset 0 2px 0 0 rgba(0, 0, 0, 0.25); }
-	 
-	 .more-help {
-  display: inline-block;
-  background: #004893;
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  text-align: center;
-  color: #fff;
-  font: italic normal 1.2em/25px Georgia, Arial;
-  cursor: pointer;
-  vertical-align: top; }
+2025/06/26 10:26:56.433 ERROR   http.log.error  dial tcp :3000: connectex: No connection could be made because the target machine actively refused it. {"request": {"remote_ip": "127.0.0.1", "remote_port": "59203", "proto": "HTTP/1.1", "method": "GET", "host": "localhost", "uri": "/mockServiceWorker.js", "headers": {"Referer": ["http://localhost/mockServiceWorker.js"], "Cache-Control": ["max-age=0"], "Dnt": ["1"], "Accept-Encoding": ["gzip, deflate, br, zstd"], "Service-Worker": ["script"], "Sec-Fetch-Dest": ["serviceworker"], "User-Agent": ["Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"], "Connection": ["keep-alive"], "Sec-Fetch-Site": ["same-origin"], "Accept-Language": ["fr,fr-FR;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"], "Accept": ["*/*"], "Sec-Fetch-Mode": ["same-origin"]}}, "duration": 2.0386539, "status": 502, "err_id": "yu7g454q6", "err_trace": "reverseproxy.statusError (reverseproxy.go:1299)"}
