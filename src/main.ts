@@ -1,7 +1,6 @@
-const formatEsignUrl = (config: IConfiguration, contextId: string) => {
+  test("should return URL with contextId", () => {
+    const config = structuredClone(configDefault);
+    const result = getEsignUrl([], { contextId: "1234" }, config as IConfiguration);
+    expect(result).toBe("https://example.com/?contexteId=1234");
+  });
 
- if (!contextId) {
-   throw new Error("contextId is required");
- }
-  return getDomainForUrl(config.urls.esign, config) + contextId;
-};
