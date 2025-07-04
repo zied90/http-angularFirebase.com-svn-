@@ -1,39 +1,18 @@
 
-  
-  function getDataForEsignFormulaire(documentSelectedTab, urlEsign) {
-    var ids = utilService.retrieveIdsFromDocuments(documentSelectedTab);
-    var idRequestTab = utilService.getIdRequestDocumentTab(documentSelectedTab);
-    var document = documentSelectedTab[0]; //--Les documents doivent se reporter au même client
-    var identifiantAbonne = '';
-    var deferred = $q.defer();
-
-    var promise1 = retrieveSubscribersFromIds({"ids": ids});
-    var promise2 = retrieveChannelsFromIds({"ids": ids});
-    var promise = retrieveContextIdFromIds({"ids": ids});
-    $q.all([promise1, promise2 ]).then(function (responses) {
-      var subscriberResponse = responses[0];
-      var subscriberTab = subscriberResponse.data.subscribers != null ? [].concat(subscriberResponse.data.subscribers) : [];
-      identifiantAbonne = isArrayNotEmpty(subscriberTab) ? _.join(removeDuplicates(subscriberTab), ';') : '';
-
-      var channelResponse = responses[1];
-      var channels = channelResponse.data.channels
-      var isValidate = getDocumentIsValidate(documentSelectedTab);
-      var esignObject = {
-        'urlEsign': urlEsign,
-        'data': {
-          'ids': ids,
-          'idRequestTab': idRequestTab,
-          'numberContract': ajoutPrefixe(document.numberContract, 16),
-          'numberClient': ajoutPrefixe(document.numberClient, 10),
-          'identifiantAbonne': ajoutPrefixe(identifiantAbonne, 10),
-          'channels': channels,
-          'token': document && document.esignParams ? document.esignParams.token : null,
-          'isValidate': isValidate
-        }
-      }
-      deferred.resolve(esignObject);
-    }).catch(function (error) {
-      $log.error('XHR Failed for retrieveSubscribersFromIds.' + error.data);
-    });
-    return deferred.promise;
-  }
+  Scénario: L'appel au service de récupération des documents se fait correctement
+    Et mon profil
+      | demat |
+      | false |
+    Et les documents des dossiers suivants
+      | actId | docId | index | esign | demat | contractNumber | clientNumber |
+      | 1     | 11    | 1     | true  | false | 11111123456    | 22222211123  |
+      | 2     | 22    | 2     | true  | false | 11111123456    | 22222211123  |
+    Et 1 préimprimé
+    Quand j'accède à Spoolnet
+    Et je sélectionne le "dossier 1" du "tableau des dossiers"
+    Et je sélectionne le "dossier 2" du "tableau des dossiers"
+    Et je sélectionne "Signature électronique" dans "menu actions par lots"
+    Alors le service "@actsDocuments" est appelé avec le body suivant :
+      | pagination                                                     |
+      | {"page": 0,"size": 25,"sortBy": "dateCreated","order": "DESC"} |
+    Alors les dossiers n'ont pas été rechargés
